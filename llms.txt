@@ -1,0 +1,19 @@
+# gpa-calculator-mcp
+
+> GPA, grade conversion and what-do-I-need-on-the-final math for AI. Works offline, no account. Free and open source MCP server for AI apps (Claude, ChatGPT, Cursor, Copilot and others).
+
+## Setup
+- Run with npx -y gpa-calculator-mcp
+- No environment variables, no network and no account.
+
+## Tools
+- calculate_gpa
+- convert_grade
+- needed_on_final
+- weighted_grade
+- target_gpa_planner
+- list_scales
+
+## Links
+- Source and README, https://github.com/AnonymousOnyx22/gpa-calculator-mcp
+- More free student MCP servers, https://brightspacemcp.com/more-mcps/
