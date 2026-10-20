@@ -4,7 +4,7 @@
 [![downloads](https://img.shields.io/npm/dm/gpa-calculator-mcp.svg)](https://www.npmjs.com/package/gpa-calculator-mcp)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. Ask it to work out your GPA, convert grades between letters and percentages, and figure out what you need on the final. The math is done by tested code, not guessed by the model.
+GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is the gpa calculator mcp for AI apps. Ask it to work out your GPA, plan the GPA you need to hit a target, convert grades between letters and percentages, and figure out what you need on the final. The math is done by tested code, not guessed by the model.
 
 Use it with Claude, ChatGPT, Cursor, VS Code Copilot and any other app that supports MCP. It runs on your computer, needs no internet and no login, and never sees your school account.
 
