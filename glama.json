@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "gpa-calculator-mcp",
-  "description": "GPA calculator MCP server. Calculate GPA, weighted and final grades, and convert letter grades.",
+  "description": "GPA calculator MCP server for AI apps. Calculate GPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account.",
   "type": "stdio",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,261 @@
     "source": "github"
   },
   "homepage": "https://github.com/AnonymousOnyx22/gpa-calculator-mcp",
+  "version": "0.1.0",
   "maintainers": [
     "AnonymousOnyx22"
+  ],
+  "tools": [
+    {
+      "name": "calculate_gpa",
+      "description": "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Example prompt: \"What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?\"",
+      "parameters": [
+        {
+          "name": "courses",
+          "type": "array",
+          "required": true,
+          "description": "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional.",
+          "items": {
+            "type": "object",
+            "required": ["credits", "grade"],
+            "properties": {
+              "name": { "type": "string", "description": "Course name." },
+              "credits": { "type": "number", "description": "Credits for the course, must be greater than 0." },
+              "grade": { "type": ["string", "number"], "description": "A letter like \"B+\" or a percentage like 87 or \"87%\"." }
+            }
+          }
+        },
+        {
+          "name": "scale",
+          "type": "string",
+          "required": false,
+          "default": "us4",
+          "enum": ["us4", "us4plus", "ontario-college"],
+          "description": "Grade scale id: \"us4\", \"us4plus\" or \"ontario-college\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
+        },
+        {
+          "name": "prior_gpa",
+          "type": "number",
+          "required": false,
+          "description": "GPA from earlier terms, 0 to 5. Pass this together with prior_credits to get a cumulative GPA."
+        },
+        {
+          "name": "prior_credits",
+          "type": "number",
+          "required": false,
+          "description": "Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA."
+        }
+      ],
+      "example": {
+        "name": "calculate_gpa",
+        "arguments": {
+          "courses": [
+            { "name": "Calculus", "credits": 3, "grade": "A" },
+            { "name": "Physics", "credits": 4, "grade": "B+" },
+            { "name": "History", "credits": 3, "grade": "C" }
+          ],
+          "scale": "us4"
+        }
+      },
+      "output": "One line per course (\"Calculus: A, 4.0 points x 3 credits\"), then \"GPA for these courses: 3.12 across 10 credits (US 4.0 scale).\""
+    },
+    {
+      "name": "convert_grade",
+      "description": "Convert a letter or percentage into the matching letter, percentage range and grade points on a grade scale. Inputs: grade (a letter like \"B+\" or a percentage like 87 or \"87%\") and a scale id. Example prompt: \"Convert 78 percent to a letter grade on the Ontario college scale.\"",
+      "parameters": [
+        {
+          "name": "grade",
+          "type": ["string", "number"],
+          "required": true,
+          "description": "A letter like \"B+\" or a percentage like 87 or \"87%\"."
+        },
+        {
+          "name": "scale",
+          "type": "string",
+          "required": false,
+          "default": "us4",
+          "enum": ["us4", "us4plus", "ontario-college"],
+          "description": "Grade scale id: \"us4\", \"us4plus\" or \"ontario-college\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
+        }
+      ],
+      "example": {
+        "name": "convert_grade",
+        "arguments": { "grade": 78, "scale": "ontario-college" }
+      },
+      "output": "\"78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points.\""
+    },
+    {
+      "name": "needed_on_final",
+      "description": "Calculate the score needed on a final exam or last assignment to reach a target course grade. Inputs: current_percent (the average on all the other work, 0 to 100), final_weight_percent (how much the final is worth, greater than 0 and at most 100) and target_percent (the course grade you want, 0 to 100). Says so when the target is already locked in or out of reach. Example prompt: \"My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?\"",
+      "parameters": [
+        {
+          "name": "current_percent",
+          "type": "number",
+          "required": true,
+          "description": "Current grade on the work already done, as a percentage between 0 and 100."
+        },
+        {
+          "name": "final_weight_percent",
+          "type": "number",
+          "required": true,
+          "description": "How much the final is worth, greater than 0 and at most 100, as a percentage of the whole course."
+        },
+        {
+          "name": "target_percent",
+          "type": "number",
+          "required": true,
+          "description": "The course grade you want to finish with, as a percentage between 0 and 100."
+        }
+      ],
+      "example": {
+        "name": "needed_on_final",
+        "arguments": { "current_percent": 74, "final_weight_percent": 40, "target_percent": 80 }
+      },
+      "output": "\"You need 89% on the final (worth 40%) to finish with 80%, starting from 74% on the rest.\""
+    },
+    {
+      "name": "weighted_grade",
+      "description": "Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). Example prompt: \"My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?\"",
+      "parameters": [
+        {
+          "name": "parts",
+          "type": "array",
+          "required": true,
+          "description": "The weighted parts of the course. Each needs a name and a weight (a percentage greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet.",
+          "items": {
+            "type": "object",
+            "required": ["name", "weight"],
+            "properties": {
+              "name": { "type": "string", "description": "Name of the course part." },
+              "weight": { "type": "number", "description": "Weight as a percentage, greater than 0." },
+              "score": { "type": ["number", "null"], "description": "Score between 0 and 100 for marked parts, or leave out for unmarked parts." }
+            }
+          }
+        }
+      ],
+      "example": {
+        "name": "weighted_grade",
+        "arguments": {
+          "parts": [
+            { "name": "Quizzes", "weight": 20, "score": 85 },
+            { "name": "Labs", "weight": 30, "score": 70 },
+            { "name": "Exam", "weight": 50 }
+          ]
+        }
+      },
+      "output": "One line per part (\"Quizzes: weight 20%, 85%\"), then \"Grade so far: 76% on the 50% of the course that is marked.\", then the worst and best possible finish (38% and 88%) and how much of the course is still to come."
+    },
+    {
+      "name": "target_gpa_planner",
+      "description": "Plan the GPA needed on upcoming credits to reach a target cumulative GPA. Inputs: current_gpa (0 to 5), credits_completed (0 or more), target_gpa (0 to 5), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. Says so when the target is already reached or would take more than one term. Example prompt: \"I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?\"",
+      "parameters": [
+        {
+          "name": "current_gpa",
+          "type": "number",
+          "required": true,
+          "description": "Your cumulative GPA so far, between 0 and 5."
+        },
+        {
+          "name": "credits_completed",
+          "type": "number",
+          "required": true,
+          "description": "Credits already completed, 0 or more."
+        },
+        {
+          "name": "target_gpa",
+          "type": "number",
+          "required": true,
+          "description": "The cumulative GPA you want to reach, between 0 and 5."
+        },
+        {
+          "name": "upcoming_credits",
+          "type": "number",
+          "required": true,
+          "description": "Credits you will take next, greater than 0."
+        },
+        {
+          "name": "scale",
+          "type": "string",
+          "required": false,
+          "default": "us4",
+          "enum": ["us4", "us4plus", "ontario-college"],
+          "description": "Grade scale id: \"us4\", \"us4plus\" or \"ontario-college\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
+        }
+      ],
+      "example": {
+        "name": "target_gpa_planner",
+        "arguments": {
+          "current_gpa": 3.1,
+          "credits_completed": 60,
+          "target_gpa": 3.4,
+          "upcoming_credits": 15,
+          "scale": "us4"
+        }
+      },
+      "output": "\"You would need 4.6 on the next 15 credits, but the top of this scale is 4.0. Reaching 3.4 would take more than one term.\" Ask for 3.2 instead of 3.4 and the same call needs a 3.60 GPA."
+    },
+    {
+      "name": "list_scales",
+      "description": "List the built-in grade scales with their letters, percentage ranges and grade points. Inputs: none. Example prompt: \"Show me the grade scales you have built in.\"",
+      "parameters": [],
+      "example": {
+        "name": "list_scales",
+        "arguments": {}
+      },
+      "output": "The three scales from the gradeScales list below, one line per letter with the percentage range and the grade points."
+    }
+  ],
+  "gradeScales": [
+    {
+      "id": "us4",
+      "name": "US 4.0 scale",
+      "bands": [
+        { "letter": "A", "min": 93, "max": 100, "points": 4.0 },
+        { "letter": "A-", "min": 90, "max": 92, "points": 3.7 },
+        { "letter": "B+", "min": 87, "max": 89, "points": 3.3 },
+        { "letter": "B", "min": 83, "max": 86, "points": 3.0 },
+        { "letter": "B-", "min": 80, "max": 82, "points": 2.7 },
+        { "letter": "C+", "min": 77, "max": 79, "points": 2.3 },
+        { "letter": "C", "min": 73, "max": 76, "points": 2.0 },
+        { "letter": "C-", "min": 70, "max": 72, "points": 1.7 },
+        { "letter": "D+", "min": 67, "max": 69, "points": 1.3 },
+        { "letter": "D", "min": 63, "max": 66, "points": 1.0 },
+        { "letter": "D-", "min": 60, "max": 62, "points": 0.7 },
+        { "letter": "F", "min": 0, "max": 59, "points": 0.0 }
+      ]
+    },
+    {
+      "id": "us4plus",
+      "name": "US 4.3 scale (A+ is 4.3)",
+      "bands": [
+        { "letter": "A+", "min": 97, "max": 100, "points": 4.3 },
+        { "letter": "A", "min": 93, "max": 96, "points": 4.0 },
+        { "letter": "A-", "min": 90, "max": 92, "points": 3.7 },
+        { "letter": "B+", "min": 87, "max": 89, "points": 3.3 },
+        { "letter": "B", "min": 83, "max": 86, "points": 3.0 },
+        { "letter": "B-", "min": 80, "max": 82, "points": 2.7 },
+        { "letter": "C+", "min": 77, "max": 79, "points": 2.3 },
+        { "letter": "C", "min": 73, "max": 76, "points": 2.0 },
+        { "letter": "C-", "min": 70, "max": 72, "points": 1.7 },
+        { "letter": "D+", "min": 67, "max": 69, "points": 1.3 },
+        { "letter": "D", "min": 63, "max": 66, "points": 1.0 },
+        { "letter": "D-", "min": 60, "max": 62, "points": 0.7 },
+        { "letter": "F", "min": 0, "max": 59, "points": 0.0 }
+      ]
+    },
+    {
+      "id": "ontario-college",
+      "name": "Ontario college 4.0 scale (common version, check your school's table)",
+      "bands": [
+        { "letter": "A+", "min": 90, "max": 100, "points": 4.0 },
+        { "letter": "A", "min": 80, "max": 89, "points": 4.0 },
+        { "letter": "B+", "min": 75, "max": 79, "points": 3.5 },
+        { "letter": "B", "min": 70, "max": 74, "points": 3.0 },
+        { "letter": "C+", "min": 65, "max": 69, "points": 2.5 },
+        { "letter": "C", "min": 60, "max": 64, "points": 2.0 },
+        { "letter": "D", "min": 50, "max": 59, "points": 1.0 },
+        { "letter": "F", "min": 0, "max": 49, "points": 0.0 }
+      ]
+    }
   ]
 }
