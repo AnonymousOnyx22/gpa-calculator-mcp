@@ -1,6 +1,6 @@
 # gpa-calculator-mcp
 
-> GPA, grade conversion and what-do-I-need-on-the-final math for AI. Works offline, no account. Free and open source MCP server for AI apps (Claude, ChatGPT, Cursor, Copilot and others).
+> GPA calculator MCP server for AI apps. Calculates GPA, converts grades and shows what you need on the final. Works offline, no account. Free and open source, works with Claude, ChatGPT, Cursor, Copilot and others.
 
 ## Setup
 - Run with npx -y gpa-calculator-mcp

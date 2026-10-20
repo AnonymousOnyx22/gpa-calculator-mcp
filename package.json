@@ -1,7 +1,7 @@
 {
   "name": "gpa-calculator-mcp",
   "version": "0.1.0",
-  "description": "GPA, grade conversion and what-do-I-need-on-the-final math for AI. Works offline, no account.",
+  "description": "GPA calculator MCP server for AI apps. Calculate GPA, convert grades and find what you need on the final. Works offline, no account.",
   "type": "module",
   "main": "build/src/index.js",
   "bin": {
@@ -24,9 +24,22 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
+    "gpa calculator mcp",
+    "gpa calculator",
+    "mcp gpa calculator",
+    "gpa-calculator-mcp",
+    "gpa calculator server",
     "mcp",
     "mcp-server",
     "model-context-protocol",
+    "grade point average",
+    "gpa",
+    "grades",
+    "calculator",
+    "gpa-calculator",
+    "grade conversion",
+    "final exam",
+    "percentage",
     "student",
     "students",
     "education",
@@ -34,13 +47,7 @@
     "ai-agent",
     "claude",
     "chatgpt",
-    "cursor",
-    "gpa",
-    "grades",
-    "calculator",
-    "gpa-calculator",
-    "final-exam",
-    "percentage"
+    "cursor"
   ],
   "author": "AnonymousOnyx22",
   "license": "MIT",
