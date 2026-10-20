@@ -93,7 +93,7 @@ npm run build
 npm test
 ```
 
-The tests call every tool through a real MCP client, so they need no account or network.
+The tests call every tool through a real MCP client, so they need no account or network. Running the tests needs Node.js 22.12 or newer, because of the test runner. The server itself runs on Node.js 20 or newer.
 
 ## More free student MCP servers
 
