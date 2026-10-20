@@ -1,6 +1,6 @@
 {
   "name": "gpa-calculator-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GPA calculator MCP server for AI apps. Ask your AI to calculate GPA, weighted and final grades, plan a target GPA and convert letter grades. The gpa calculator mcp that works offline with no account.",
   "type": "module",
   "main": "build/src/index.js",
