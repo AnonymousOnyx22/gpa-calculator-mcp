@@ -7,12 +7,12 @@
 - No environment variables, no network and no account.
 
 ## Tools
-- calculate_gpa
-- convert_grade
-- needed_on_final
-- weighted_grade
-- target_gpa_planner
-- list_scales
+- calculate_gpa: courses with credits and grades (letters like "B+" or percentages like 87), plus optional earlier GPA and credits. Example: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
+- convert_grade: a letter or percentage and a scale id, returns the letter, percentage range and grade points. Example: "Convert 78 percent to a letter grade on the Ontario college scale."
+- needed_on_final: current_percent, final_weight_percent and target_percent, returns the score needed on the final. Example: "My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?"
+- weighted_grade: weighted parts with optional scores for unmarked work, returns grade so far and best and worst finish. Example: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
+- target_gpa_planner: current_gpa, credits_completed, target_gpa and upcoming_credits, returns the GPA needed next. Example: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
+- list_scales: no inputs, lists the built-in grade scales with letters, percentage ranges and grade points. Example: "Show me the grade scales you have built in."
 
 ## Links
 - Source and README, https://github.com/AnonymousOnyx22/gpa-calculator-mcp

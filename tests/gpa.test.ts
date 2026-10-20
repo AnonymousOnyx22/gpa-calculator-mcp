@@ -54,6 +54,23 @@ describe("MCP tools", () => {
     expect(tools.map((t) => t.name).sort()).toEqual(["calculate_gpa", "convert_grade", "list_scales", "needed_on_final", "target_gpa_planner", "weighted_grade"]);
     for (const t of tools) expect(t.annotations?.readOnlyHint).toBe(true);
   });
+  it("names every parameter and gives an example prompt in each description", async () => {
+    const tools = (await client.listTools()).tools;
+    for (const t of tools) {
+      const description = t.description ?? "";
+      const props = Object.keys(((t.inputSchema as any).properties ?? {}) as Record<string, unknown>);
+      for (const p of props) expect(description, `${t.name} description should mention ${p}`).toContain(p);
+      expect(description, `${t.name} description should include an example prompt`).toMatch(/Example prompt: "/);
+      expect(description.endsWith('"'), `${t.name} description should end with the example prompt`).toBe(true);
+    }
+  });
+  it("describes every parameter", async () => {
+    const tools = (await client.listTools()).tools;
+    for (const t of tools) {
+      const props = ((t.inputSchema as any).properties ?? {}) as Record<string, { description?: string }>;
+      for (const [key, def] of Object.entries(props)) expect(def.description, `${t.name}.${key} should have a description`).toBeTruthy();
+    }
+  });
   it("answers the final exam question in words", async () => {
     const r = await call("needed_on_final", { current_percent: 74, final_weight_percent: 40, target_percent: 80 });
     expect(r.text).toContain("89%");

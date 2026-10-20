@@ -65,12 +65,14 @@ Six tools. These names are the ones your AI app sees.
 
 | Tool | Parameters | What it does |
 | --- | --- | --- |
-| `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA |
+| `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA |
 | `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
-| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent` | The score you need on the final to hit a target, and whether it is possible |
-| `weighted_grade` | `parts` (name, weight, score) | Your grade so far and your best and worst possible finish from weighted parts |
-| `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | The GPA you need on upcoming credits to reach a target cumulative GPA |
-| `list_scales` | none | The grade scales built in, with their letter, percentage and points tables |
+| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach |
+| `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work |
+| `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | Plan the GPA you need on upcoming credits to reach a target cumulative GPA |
+| `list_scales` | none | List the grade scales built in, with their letter, percentage and points tables |
+
+Every tool description sent to your AI app ends with one example prompt, so the model can match a question like "What do I need on the final?" to the right tool and fill in every parameter.
 
 ## Grade scales
 
