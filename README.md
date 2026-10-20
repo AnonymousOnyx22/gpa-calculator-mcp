@@ -10,9 +10,15 @@ Use it with Claude, ChatGPT, Cursor, VS Code Copilot and any other app that supp
 
 Free forever. No account and no subscription.
 
-## Quick start
+## Install
 
-Add this to your AI app's MCP config. For Claude Desktop that is `claude_desktop_config.json`.
+Run it straight from npm with `npx`. You need Node.js 20 or newer. There is nothing else to install, no account and no config file for the server itself.
+
+```bash
+npx -y gpa-calculator-mcp
+```
+
+Add it to your AI app's MCP config so the app can start it for you. For Claude Desktop that is `claude_desktop_config.json`.
 
 ```json
 {
@@ -25,28 +31,46 @@ Add this to your AI app's MCP config. For Claude Desktop that is `claude_desktop
 }
 ```
 
-Restart your AI app, then try one of the questions below. You need Node.js 20 or newer.
+For Claude Code, run `claude mcp add gpa -- npx -y gpa-calculator-mcp`. Restart your AI app after the config change.
 
-For Claude Code, run `claude mcp add gpa -- npx -y gpa-calculator-mcp`.
+## Try these three prompts
 
-## What you can ask
+1. What do I need on the final?
 
-- "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
-- "What do I need on the final to get an 80 if it's worth 40% and I'm at 74 right now?"
-- "Convert 78 percent to a letter grade on the Ontario college scale."
+   > "My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?"
+
+   The model calls `needed_on_final` with `current_percent` 74, `final_weight_percent` 40 and `target_percent` 80. The tool works out that the other 60% of the course is locked in, so you need 89% on the final to reach 80%.
+
+2. What is my GPA?
+
+   > "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
+
+   `calculate_gpa` returns 3.12 across 10 credits on the `us4` scale, with a per course breakdown.
+
+3. Convert a grade
+
+   > "Convert 78 percent to a letter grade on the Ontario college scale."
+
+   `convert_grade` returns the letter, the percentage range it covers and the grade points, using the `ontario-college` scale.
+
+More things you can ask:
+
 - "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
 - "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
+- "Show me the grade scales you have built in."
 
 ## Tools
 
-| Tool | What it does |
-| --- | --- |
-| `calculate_gpa` | GPA for a list of courses with credits and grades, optionally combined with your earlier GPA |
-| `convert_grade` | Convert a letter or percentage to the matching letter, percentage range and grade points |
-| `needed_on_final` | The score you need on the final to hit a target, and whether it is possible |
-| `weighted_grade` | Your grade so far and your best and worst possible finish from weighted parts |
-| `target_gpa_planner` | The GPA you need on upcoming credits to reach a target cumulative GPA |
-| `list_scales` | The grade scales built in, with their letter, percentage and points tables |
+Six tools. These names are the ones your AI app sees.
+
+| Tool | Parameters | What it does |
+| --- | --- | --- |
+| `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA |
+| `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
+| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent` | The score you need on the final to hit a target, and whether it is possible |
+| `weighted_grade` | `parts` (name, weight, score) | Your grade so far and your best and worst possible finish from weighted parts |
+| `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | The GPA you need on upcoming credits to reach a target cumulative GPA |
+| `list_scales` | none | The grade scales built in, with their letter, percentage and points tables |
 
 ## Grade scales
 
