@@ -6,13 +6,112 @@
 - Run with npx -y gpa-calculator-mcp
 - No environment variables, no network and no account.
 
+## Grade conversion tables
+The server includes these built-in grade scales:
+
+### us4 (US 4.0 scale)
+- A: 93 to 100, 4.0 grade points
+- A-: 90 to 92, 3.7 grade points
+- B+: 87 to 89, 3.3 grade points
+- B: 83 to 86, 3.0 grade points
+- B-: 80 to 82, 2.7 grade points
+- C+: 77 to 79, 2.3 grade points
+- C: 73 to 76, 2.0 grade points
+- C-: 70 to 72, 1.7 grade points
+- D+: 67 to 69, 1.3 grade points
+- D: 63 to 66, 1.0 grade points
+- D-: 60 to 62, 0.7 grade points
+- F: 0 to 59, 0.0 grade points
+
+### us4plus (US 4.3 scale, A+ is 4.3)
+- A+: 97 to 100, 4.3 grade points
+- A: 93 to 96, 4.0 grade points
+- A-: 90 to 92, 3.7 grade points
+- B+: 87 to 89, 3.3 grade points
+- B: 83 to 86, 3.0 grade points
+- B-: 80 to 82, 2.7 grade points
+- C+: 77 to 79, 2.3 grade points
+- C: 73 to 76, 2.0 grade points
+- C-: 70 to 72, 1.7 grade points
+- D+: 67 to 69, 1.3 grade points
+- D: 63 to 66, 1.0 grade points
+- D-: 60 to 62, 0.7 grade points
+- F: 0 to 59, 0.0 grade points
+
+### ontario-college (Ontario college 4.0 scale, common version, check your school's table)
+- A+: 90 to 100, 4.0 grade points
+- A: 80 to 89, 4.0 grade points
+- B+: 75 to 79, 3.5 grade points
+- B: 70 to 74, 3.0 grade points
+- C+: 65 to 69, 2.5 grade points
+- C: 60 to 64, 2.0 grade points
+- D: 50 to 59, 1.0 grade points
+- F: 0 to 49, 0.0 grade points
+
 ## Tools
-- calculate_gpa: courses with credits and grades (letters like "B+" or percentages like 87), plus optional earlier GPA and credits. Example: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
-- convert_grade: a letter or percentage and a scale id, returns the letter, percentage range and grade points. Example: "Convert 78 percent to a letter grade on the Ontario college scale."
-- needed_on_final: current_percent, final_weight_percent and target_percent, returns the score needed on the final. Example: "My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?"
-- weighted_grade: weighted parts with optional scores for unmarked work, returns grade so far and best and worst finish. Example: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
-- target_gpa_planner: current_gpa, credits_completed, target_gpa and upcoming_credits, returns the GPA needed next. Example: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
-- list_scales: no inputs, lists the built-in grade scales with letters, percentage ranges and grade points. Example: "Show me the grade scales you have built in."
+
+### calculate_gpa
+Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total.
+
+Parameters:
+- courses (array, required): The courses to include. Each needs credits (greater than 0) and a grade (a letter like "B+" or a percentage like 87). name is optional.
+  - name (string, optional): Course name.
+  - credits (number, required): Credits for the course, must be greater than 0.
+  - grade (string or number, required): A letter like "B+" or a percentage like 87 or "87%".
+- scale (string, required, default "us4"): Grade scale id: "us4", "us4plus" or "ontario-college". Defaults to "us4". Ask the student which one their school uses if unsure.
+- prior_gpa (number, optional): GPA from earlier terms, 0 to 5. Pass this together with prior_credits to get a cumulative GPA.
+- prior_credits (number, optional): Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA.
+
+Example prompt: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
+
+### convert_grade
+Convert a letter or percentage into the matching letter, percentage range and grade points on a grade scale.
+
+Parameters:
+- grade (string or number, required): A letter like "B+" or a percentage like 87 or "87%".
+- scale (string, required, default "us4"): Grade scale id: "us4", "us4plus" or "ontario-college". Defaults to "us4". Ask the student which one their school uses if unsure.
+
+Example prompt: "Convert 78 percent to a letter grade on the Ontario college scale."
+
+### needed_on_final
+Calculate the score needed on a final exam or last assignment to reach a target course grade.
+
+Parameters:
+- current_percent (number, required): Current grade on the work already done, as a percentage between 0 and 100.
+- final_weight_percent (number, required): How much the final is worth, greater than 0 and at most 100, as a percentage of the whole course.
+- target_percent (number, required): The course grade you want to finish with, as a percentage between 0 and 100.
+
+Example prompt: "My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?"
+
+### weighted_grade
+Combine weighted course parts into the grade so far, plus the worst and best possible finish.
+
+Parameters:
+- parts (array, required): The weighted parts of the course. Each needs a name and a weight (a percentage greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet.
+  - name (string, required): Name of the course part.
+  - weight (number, required): Weight as a percentage, greater than 0.
+  - score (number or null, optional): Score between 0 and 100 for marked parts, or leave out for unmarked parts.
+
+Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
+
+### target_gpa_planner
+Plan the GPA needed on upcoming credits to reach a target cumulative GPA.
+
+Parameters:
+- current_gpa (number, required): Your cumulative GPA so far, between 0 and 5.
+- credits_completed (number, required): Credits already completed, 0 or more.
+- target_gpa (number, required): The cumulative GPA you want to reach, between 0 and 5.
+- upcoming_credits (number, required): Credits you will take next, greater than 0.
+- scale (string, required, default "us4"): Grade scale id: "us4", "us4plus" or "ontario-college". Defaults to "us4". Ask the student which one their school uses if unsure.
+
+Example prompt: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
+
+### list_scales
+List the built-in grade scales with their letters, percentage ranges and grade points.
+
+Parameters: none.
+
+Example prompt: "Show me the grade scales you have built in."
 
 ## Links
 - Source and README, https://github.com/AnonymousOnyx22/gpa-calculator-mcp
