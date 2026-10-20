@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Small fixes and clearer docs
+
 ## 0.1.1
 
 - Audit llms.txt and glama.json so every tool appears with parameters and 
