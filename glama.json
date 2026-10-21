@@ -38,14 +38,14 @@
           "type": "string",
           "required": false,
           "default": "us4",
-          "enum": ["us4", "us4plus", "ontario-college"],
-          "description": "Grade scale id: \"us4\", \"us4plus\" or \"ontario-college\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
+          "enum": ["us4", "us4plus", "ontario-college", "uk-classification", "australia-hd", "weighted-5.0"],
+          "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
         },
         {
           "name": "prior_gpa",
           "type": "number",
           "required": false,
-          "description": "GPA from earlier terms, 0 to 5. Pass this together with prior_credits to get a cumulative GPA."
+          "description": "GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA."
         },
         {
           "name": "prior_credits",
@@ -82,8 +82,8 @@
           "type": "string",
           "required": false,
           "default": "us4",
-          "enum": ["us4", "us4plus", "ontario-college"],
-          "description": "Grade scale id: \"us4\", \"us4plus\" or \"ontario-college\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
+          "enum": ["us4", "us4plus", "ontario-college", "uk-classification", "australia-hd", "weighted-5.0"],
+          "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
         }
       ],
       "example": {
@@ -155,13 +155,13 @@
     },
     {
       "name": "target_gpa_planner",
-      "description": "Plan the GPA needed on upcoming credits to reach a target cumulative GPA. Inputs: current_gpa (0 to 5), credits_completed (0 or more), target_gpa (0 to 5), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. Says so when the target is already reached or would take more than one term. Example prompt: \"I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?\"",
+      "description": "Plan the GPA needed on upcoming credits to reach a target cumulative GPA. Inputs: current_gpa (0 to 7), credits_completed (0 or more), target_gpa (0 to 7), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. Says so when the target is already reached or would take more than one term. Example prompt: \"I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?\"",
       "parameters": [
         {
           "name": "current_gpa",
           "type": "number",
           "required": true,
-          "description": "Your cumulative GPA so far, between 0 and 5."
+          "description": "Your cumulative GPA so far, between 0 and 7."
         },
         {
           "name": "credits_completed",
@@ -173,7 +173,7 @@
           "name": "target_gpa",
           "type": "number",
           "required": true,
-          "description": "The cumulative GPA you want to reach, between 0 and 5."
+          "description": "The cumulative GPA you want to reach, between 0 and 7."
         },
         {
           "name": "upcoming_credits",
@@ -186,8 +186,8 @@
           "type": "string",
           "required": false,
           "default": "us4",
-          "enum": ["us4", "us4plus", "ontario-college"],
-          "description": "Grade scale id: \"us4\", \"us4plus\" or \"ontario-college\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
+          "enum": ["us4", "us4plus", "ontario-college", "uk-classification", "australia-hd", "weighted-5.0"],
+          "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
         }
       ],
       "example": {
@@ -210,7 +210,7 @@
         "name": "list_scales",
         "arguments": {}
       },
-      "output": "The three scales from the gradeScales list below, one line per letter with the percentage range and the grade points."
+      "output": "The six scales from the gradeScales list below, one line per letter with the percentage range and the grade points."
     }
   ],
   "gradeScales": [
@@ -263,6 +263,46 @@
         { "letter": "C", "min": 60, "max": 64, "points": 2.0 },
         { "letter": "D", "min": 50, "max": 59, "points": 1.0 },
         { "letter": "F", "min": 0, "max": 49, "points": 0.0 }
+      ]
+    },
+    {
+      "id": "uk-classification",
+      "name": "UK degree classification (standard boundaries, check your school's table)",
+      "bands": [
+        { "letter": "1st", "min": 70, "max": 100, "points": 4.0 },
+        { "letter": "2:1", "min": 60, "max": 69, "points": 3.3 },
+        { "letter": "2:2", "min": 50, "max": 59, "points": 2.7 },
+        { "letter": "3rd", "min": 40, "max": 49, "points": 2.0 },
+        { "letter": "F", "min": 0, "max": 39, "points": 0.0 }
+      ]
+    },
+    {
+      "id": "australia-hd",
+      "name": "Australian 7.0 scale (HD is 7, common version, check your school's table)",
+      "bands": [
+        { "letter": "HD", "min": 80, "max": 100, "points": 7.0 },
+        { "letter": "D", "min": 70, "max": 79, "points": 6.0 },
+        { "letter": "C", "min": 60, "max": 69, "points": 5.0 },
+        { "letter": "P", "min": 50, "max": 59, "points": 4.0 },
+        { "letter": "F", "min": 0, "max": 49, "points": 0.0 }
+      ]
+    },
+    {
+      "id": "weighted-5.0",
+      "name": "US weighted 5.0 scale (A is 5.0, one point above us4, check your school's table)",
+      "bands": [
+        { "letter": "A", "min": 93, "max": 100, "points": 5.0 },
+        { "letter": "A-", "min": 90, "max": 92, "points": 4.7 },
+        { "letter": "B+", "min": 87, "max": 89, "points": 4.3 },
+        { "letter": "B", "min": 83, "max": 86, "points": 4.0 },
+        { "letter": "B-", "min": 80, "max": 82, "points": 3.7 },
+        { "letter": "C+", "min": 77, "max": 79, "points": 3.3 },
+        { "letter": "C", "min": 73, "max": 76, "points": 3.0 },
+        { "letter": "C-", "min": 70, "max": 72, "points": 2.7 },
+        { "letter": "D+", "min": 67, "max": 69, "points": 2.3 },
+        { "letter": "D", "min": 63, "max": 66, "points": 2.0 },
+        { "letter": "D-", "min": 60, "max": 62, "points": 1.7 },
+        { "letter": "F", "min": 0, "max": 59, "points": 0.0 }
       ]
     }
   ]

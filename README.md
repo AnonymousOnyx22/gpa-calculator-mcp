@@ -57,6 +57,7 @@ More things you can ask:
 
 - "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
 - "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
+- "What's my GPA on the UK classification scale if I got a 2:1, a 2:2 and a first?"
 - "Show me the grade scales you have built in."
 
 ## Tools
@@ -81,8 +82,13 @@ Every tool description sent to your AI app ends with one example prompt, so the 
 | `us4` | Common US 4.0 scale with plus and minus grades, A is 4.0 and A- is 3.7 |
 | `us4plus` | Same as `us4` but A+ is 4.3 |
 | `ontario-college` | A common Ontario college 4.0 scale, A+ and A are 4.0, B+ is 3.5. Check your own school's table |
+| `uk-classification` | UK degree classification boundaries, a first, a 2:1, a 2:2 and a third. Check your own school's table |
+| `australia-hd` | Australian 7.0 scale, HD is 7, D is 6, C is 5 and P is 4. Check your own school's table |
+| `weighted-5.0` | US weighted 5.0 scale, the `us4` cutoffs with every letter above F one point higher, so A is 5.0. Check your own school's table |
 
 Schools differ. Run `list_scales` to see the exact table used, and tell your AI if your school's cutoffs are different.
+
+The two UK and Australian scales turn a class or a letter into grade points so the GPA tools can add up your work. For the UK table, a first is 4.0, a 2:1 is 3.3, a 2:2 is 2.7 and a third is 2.0. A UK degree is normally reported as a class, not a GPA, so treat those points as a way to compare and plan, not as an official number. Pass a class in a letter field as `1st`, `2:1`, `2:2` or `3rd`, or pass a percentage and the server picks the class for you. The `weighted-5.0` table is a plain mapping rather than one school's official table: it keeps the `us4` cutoffs and puts every letter above F one point higher, so an A is 5.0. Pick it when your school reports a weighted GPA on a 5.0 top.
 
 
 ## Use it with Brightspace or Canvas MCP

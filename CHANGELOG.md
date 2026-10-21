@@ -22,6 +22,7 @@
 
 ## Unreleased
 
+- Added three more grade scales: `uk-classification` for UK degree classes (a first, a 2:1, a 2:2 and a third, with a plain mapping to grade points), `australia-hd` for the common Australian 7.0 scale (HD, D, C and P), and `weighted-5.0` for a US weighted 5.0 top (the us4 cutoffs, one point higher above F, so A is 5.0). Mirrored the new tables into llms.txt and glama.json and the README scale table, lifted the GPA bounds from 5 to 7 so the 7.0 scale fits, and matched the tables and bounds in the tests. Tool names and parameters are unchanged.
 - Added a test that asks the server for its own tool list over an in memory link and checks that llms.txt and glama.json list the same tools in the same order, so a tool cannot ship undocumented.
 - Updated the development dependencies to the current releases: TypeScript 7.0.2, Vitest 5.0.5 and the Node type definitions 26.6.5. TypeScript 7 does not pick up the packages in node_modules/@types on its own, so tsconfig.json now names the node types. package-lock.json was regenerated to match. The server code and the tool list did not change.
 - Added a test that keeps package-lock.json in step with package.json and keeps the node types in tsconfig.json.

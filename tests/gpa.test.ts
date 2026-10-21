@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
-import { bandForPercent, neededOnFinal, weighted, gpa, targetGpaPlanner } from "../src/grades.js";
+import { bandForPercent, bandForLetter, neededOnFinal, weighted, gpa, targetGpaPlanner } from "../src/grades.js";
 
 let client: Client;
 beforeAll(async () => {
@@ -25,6 +25,36 @@ describe("grade math", () => {
     expect(bandForPercent("ontario-college", 82).letter).toBe("A");
     expect(bandForPercent("ontario-college", 77).points).toBe(3.5);
     expect(bandForPercent("ontario-college", 49.9).letter).toBe("F");
+  });
+  it("maps percentages and classes on the UK classification scale", () => {
+    expect(bandForPercent("uk-classification", 70).letter).toBe("1st");
+    expect(bandForPercent("uk-classification", 69.9).letter).toBe("2:1");
+    expect(bandForPercent("uk-classification", 60).points).toBe(3.3);
+    expect(bandForPercent("uk-classification", 55).letter).toBe("2:2");
+    expect(bandForPercent("uk-classification", 41).letter).toBe("3rd");
+    expect(bandForPercent("uk-classification", 39).letter).toBe("F");
+    expect(bandForLetter("uk-classification", "2:1").points).toBe(3.3);
+    expect(bandForLetter("uk-classification", "1ST").letter).toBe("1st");
+  });
+  it("weights a UK degree classification", () => {
+    const r = gpa([{ credits: 120, grade: "2:1" }, { credits: 120, grade: "1st" }], "uk-classification");
+    expect(r.term).toBe(3.65); // (3.3 * 120 + 4.0 * 120) / 240
+  });
+  it("maps letters to the Australian 7.0 scale", () => {
+    expect(bandForPercent("australia-hd", 85).letter).toBe("HD");
+    expect(bandForPercent("australia-hd", 85).points).toBe(7.0);
+    expect(bandForPercent("australia-hd", 75).points).toBe(6.0);
+    expect(bandForPercent("australia-hd", 65).points).toBe(5.0);
+    expect(bandForPercent("australia-hd", 50).points).toBe(4.0);
+    expect(bandForPercent("australia-hd", 45).letter).toBe("F");
+    expect(bandForLetter("australia-hd", "hd").letter).toBe("HD");
+  });
+  it("computes a weighted GPA on the 5.0 scale", () => {
+    expect(bandForLetter("weighted-5.0", "A").points).toBe(5.0);
+    expect(bandForPercent("weighted-5.0", 91).points).toBe(4.7);
+    expect(bandForPercent("weighted-5.0", 0).points).toBe(0.0);
+    const r = gpa([{ credits: 1, grade: "A" }, { credits: 1, grade: "B" }], "weighted-5.0");
+    expect(r.term).toBe(4.5); // (5.0 + 4.0) / 2
   });
   it("computes a credit weighted GPA and a cumulative one", () => {
     const r = gpa([{ credits: 3, grade: "A" }, { credits: 4, grade: "B+" }, { credits: 3, grade: "C" }], "us4", { gpa: 3.0, credits: 30 });
@@ -91,5 +121,22 @@ describe("MCP tools", () => {
   it("lists the scales", async () => {
     const r = await call("list_scales");
     expect(r.text).toContain("ontario-college");
+    expect(r.text).toContain("uk-classification");
+    expect(r.text).toContain("australia-hd");
+    expect(r.text).toContain("weighted-5.0");
+  });
+  it("converts a UK classification", async () => {
+    const r = await call("convert_grade", { grade: 68, scale: "uk-classification" });
+    expect(r.text).toContain("2:1");
+    expect(r.text).toContain("3.3 grade points");
+  });
+  it("calculates a GPA on the Australian 7.0 scale", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Networks", credits: 6, grade: "HD" }, { name: "Scripting", credits: 6, grade: 75 }], scale: "australia-hd" });
+    expect(r.text).toContain("GPA for these courses: 6.50");
+  });
+  it("plans a target GPA on the 5.0 scale", async () => {
+    const r = await call("target_gpa_planner", { current_gpa: 4.0, credits_completed: 30, target_gpa: 4.5, upcoming_credits: 15, scale: "weighted-5.0" });
+    expect(r.text).toContain("5.5 on the next 15 credits");
+    expect(r.text).toContain("top of this scale is 5.0");
   });
 });

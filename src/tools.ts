@@ -5,9 +5,12 @@ import { SCALES, bandFor, gpa, neededOnFinal, targetGpaPlanner, weighted, type S
 type Api = null;
 
 const scale = z
-  .enum(["us4", "us4plus", "ontario-college"])
+  .enum(["us4", "us4plus", "ontario-college", "uk-classification", "australia-hd", "weighted-5.0"])
   .default("us4")
-  .describe('Grade scale id: "us4", "us4plus" or "ontario-college". Defaults to "us4". Ask the student which one their school uses if unsure.');
+  .describe(
+    'Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". ' +
+      'Defaults to "us4". Ask the student which one their school uses if unsure.',
+  );
 const grade = z.union([z.string(), z.number()]).describe('A letter like "B+" or a percentage like 87 or "87%".');
 
 export const tools: ToolDef<Api>[] = [
@@ -24,7 +27,7 @@ export const tools: ToolDef<Api>[] = [
         .min(1)
         .describe("The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional."),
       scale,
-      prior_gpa: z.number().min(0).max(5).optional().describe("GPA from earlier terms, 0 to 5. Pass this together with prior_credits to get a cumulative GPA."),
+      prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA."),
       prior_credits: z.number().min(0).optional().describe("Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA."),
     },
     run: async (a) => {
@@ -97,13 +100,13 @@ export const tools: ToolDef<Api>[] = [
     title: "Target GPA planner",
     description:
       "Plan the GPA needed on upcoming credits to reach a target cumulative GPA. " +
-      "Inputs: current_gpa (0 to 5), credits_completed (0 or more), target_gpa (0 to 5), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. " +
+      "Inputs: current_gpa (0 to 7), credits_completed (0 or more), target_gpa (0 to 7), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. " +
       "Says so when the target is already reached or would take more than one term. " +
       'Example prompt: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"',
     inputSchema: {
-      current_gpa: z.number().min(0).max(5).describe("Your cumulative GPA so far, between 0 and 5."),
+      current_gpa: z.number().min(0).max(7).describe("Your cumulative GPA so far, between 0 and 7."),
       credits_completed: z.number().min(0).describe("Credits already completed, 0 or more."),
-      target_gpa: z.number().min(0).max(5).describe("The cumulative GPA you want to reach, between 0 and 5."),
+      target_gpa: z.number().min(0).max(7).describe("The cumulative GPA you want to reach, between 0 and 7."),
       upcoming_credits: z.number().gt(0).describe("Credits you will take next, greater than 0."),
       scale,
     },

@@ -1,4 +1,4 @@
-export type ScaleId = "us4" | "us4plus" | "ontario-college";
+export type ScaleId = "us4" | "us4plus" | "ontario-college" | "uk-classification" | "australia-hd" | "weighted-5.0";
 
 export interface Band {
   letter: string;
@@ -22,6 +22,41 @@ const US: Band[] = [
   { letter: "F", min: 0, max: 59, points: 0.0 },
 ];
 
+// UK honours degree boundaries. The grade points are a plain mapping so that
+// GPA arithmetic works; a classification is not normally given grade points.
+const UK: Band[] = [
+  { letter: "1st", min: 70, max: 100, points: 4.0 },
+  { letter: "2:1", min: 60, max: 69, points: 3.3 },
+  { letter: "2:2", min: 50, max: 59, points: 2.7 },
+  { letter: "3rd", min: 40, max: 49, points: 2.0 },
+  { letter: "F", min: 0, max: 39, points: 0.0 },
+];
+
+// Australian letters on the common 7 point scale.
+const AU: Band[] = [
+  { letter: "HD", min: 80, max: 100, points: 7.0 },
+  { letter: "D", min: 70, max: 79, points: 6.0 },
+  { letter: "C", min: 60, max: 69, points: 5.0 },
+  { letter: "P", min: 50, max: 59, points: 4.0 },
+  { letter: "F", min: 0, max: 49, points: 0.0 },
+];
+
+// The us4 cutoffs with every letter above F worth one more point, so A lands on 5.0.
+const WEIGHTED5: Band[] = [
+  { letter: "A", min: 93, max: 100, points: 5.0 },
+  { letter: "A-", min: 90, max: 92, points: 4.7 },
+  { letter: "B+", min: 87, max: 89, points: 4.3 },
+  { letter: "B", min: 83, max: 86, points: 4.0 },
+  { letter: "B-", min: 80, max: 82, points: 3.7 },
+  { letter: "C+", min: 77, max: 79, points: 3.3 },
+  { letter: "C", min: 73, max: 76, points: 3.0 },
+  { letter: "C-", min: 70, max: 72, points: 2.7 },
+  { letter: "D+", min: 67, max: 69, points: 2.3 },
+  { letter: "D", min: 63, max: 66, points: 2.0 },
+  { letter: "D-", min: 60, max: 62, points: 1.7 },
+  { letter: "F", min: 0, max: 59, points: 0.0 },
+];
+
 export const SCALES: Record<ScaleId, { name: string; bands: Band[] }> = {
   us4: { name: "US 4.0 scale", bands: US },
   us4plus: {
@@ -40,6 +75,18 @@ export const SCALES: Record<ScaleId, { name: string; bands: Band[] }> = {
       { letter: "D", min: 50, max: 59, points: 1.0 },
       { letter: "F", min: 0, max: 49, points: 0.0 },
     ],
+  },
+  "uk-classification": {
+    name: "UK degree classification (standard boundaries, check your school's table)",
+    bands: UK,
+  },
+  "australia-hd": {
+    name: "Australian 7.0 scale (HD is 7, common version, check your school's table)",
+    bands: AU,
+  },
+  "weighted-5.0": {
+    name: "US weighted 5.0 scale (A is 5.0, one point above us4, check your school's table)",
+    bands: WEIGHTED5,
   },
 };
 
@@ -64,7 +111,8 @@ export function bandForPercent(scale: ScaleId, percent: number): Band {
 }
 
 export function bandForLetter(scale: ScaleId, letter: string): Band {
-  const found = SCALES[scale].bands.find((b) => b.letter === letter.toUpperCase());
+  const wanted = letter.trim().toUpperCase();
+  const found = SCALES[scale].bands.find((b) => b.letter.toUpperCase() === wanted);
   if (!found) {
     const valid = SCALES[scale].bands.map((b) => b.letter).join(", ");
     throw new Error(`"${letter}" is not a grade on the ${scale} scale. Valid letters are ${valid}.`);
