@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, gpa, neededOnFinal, targetGpaPlanner, weighted, type ScaleId } from "./grades.js";
+import { SCALES, bandFor, gpa, neededOnFinal, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
 const scale = z
-  .enum(["us4", "us4plus", "ontario-college", "uk-classification", "australia-hd", "weighted-5.0"])
+  .string()
   .default("us4")
   .describe(
     'Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". ' +
@@ -32,9 +32,10 @@ export const tools: ToolDef<Api>[] = [
     },
     run: async (a) => {
       const prior = a.prior_gpa !== undefined && a.prior_credits !== undefined ? { gpa: a.prior_gpa, credits: a.prior_credits } : undefined;
-      const r = gpa(a.courses, a.scale as ScaleId, prior);
+      const scaleId = assertScale(a.scale);
+      const r = gpa(a.courses, scaleId, prior);
       const lines = r.rows.map((c) => `${c.name}: ${c.letter}, ${c.points.toFixed(1)} points x ${c.credits} credits`);
-      let out = `${bullets(lines)}\n\nGPA for these courses: ${r.term.toFixed(2)} across ${r.credits} credits (${SCALES[a.scale as ScaleId].name}).`;
+      let out = `${bullets(lines)}\n\nGPA for these courses: ${r.term.toFixed(2)} across ${r.credits} credits (${SCALES[scaleId].name}).`;
       if (r.cumulative !== undefined) out += `\nCumulative GPA with earlier work: ${r.cumulative.toFixed(2)} across ${r.cumulativeCredits} credits.`;
       return out;
     },
@@ -51,8 +52,9 @@ export const tools: ToolDef<Api>[] = [
       scale,
     },
     run: async (a) => {
-      const b = bandFor(a.scale as ScaleId, a.grade);
-      return `${a.grade} is ${b.letter} on the ${SCALES[a.scale as ScaleId].name}. That letter covers ${b.min} to ${b.max} percent and is worth ${b.points.toFixed(1)} grade points.`;
+      const scaleId = assertScale(a.scale);
+      const b = bandFor(scaleId, a.grade);
+      return `${a.grade} is ${b.letter} on the ${SCALES[scaleId].name}. That letter covers ${b.min} to ${b.max} percent and is worth ${b.points.toFixed(1)} grade points.`;
     },
   },
   {
@@ -111,7 +113,8 @@ export const tools: ToolDef<Api>[] = [
       scale,
     },
     run: async (a) => {
-      const max = Math.max(...SCALES[a.scale as ScaleId].bands.map((b) => b.points));
+      const scaleId = assertScale(a.scale);
+      const max = Math.max(...SCALES[scaleId].bands.map((b) => b.points));
       const r = targetGpaPlanner(a.current_gpa, a.credits_completed, a.target_gpa, a.upcoming_credits, max);
       if (r.alreadyThere) return `You are already above ${a.target_gpa}. Even a 0.0 over the next ${a.upcoming_credits} credits keeps you at or above it.`;
       if (!r.possible) return `You would need ${r.needed} on the next ${a.upcoming_credits} credits, but the top of this scale is ${max.toFixed(1)}. Reaching ${a.target_gpa} would take more than one term.`;

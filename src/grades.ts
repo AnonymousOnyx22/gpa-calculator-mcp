@@ -103,24 +103,39 @@ export function parseGrade(input: string | number): { kind: "letter"; letter: st
   return { kind: "letter", letter: t.toUpperCase() };
 }
 
-export function bandForPercent(scale: ScaleId, percent: number): Band {
-  if (percent < 0 || percent > 100) throw new Error(`A percentage must be between 0 and 100, got ${percent}.`);
-  const bands = SCALES[scale].bands;
+export function isScaleId(value: unknown): value is ScaleId {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(SCALES, value);
+}
+
+export function assertScale(value: unknown): ScaleId {
+  if (!isScaleId(value)) {
+    throw new Error(
+      `"${value}" is not a valid grade scale. Valid scale ids are ${Object.keys(SCALES).join(", ")} (ontario college).`,
+    );
+  }
+  return value;
+}
+
+export function bandForPercent(scale: string, percent: number): Band {
+  const id = assertScale(scale);
+  if (percent < 0 || percent > 100) throw new Error(`A percentage must be between 0 and 100, got ${percent}. Accepted grade formats are 'B+', 87, '87%'.`);
+  const bands = SCALES[id].bands;
   const whole = Math.floor(percent + 1e-9);
   return bands.find((b) => whole >= b.min && whole <= b.max) ?? bands[bands.length - 1];
 }
 
-export function bandForLetter(scale: ScaleId, letter: string): Band {
+export function bandForLetter(scale: string, letter: string): Band {
+  const id = assertScale(scale);
   const wanted = letter.trim().toUpperCase();
-  const found = SCALES[scale].bands.find((b) => b.letter.toUpperCase() === wanted);
+  const found = SCALES[id].bands.find((b) => b.letter.toUpperCase() === wanted);
   if (!found) {
-    const valid = SCALES[scale].bands.map((b) => b.letter).join(", ");
-    throw new Error(`"${letter}" is not a grade on the ${scale} scale. Valid letters are ${valid}.`);
+    const valid = SCALES[id].bands.map((b) => b.letter).join(", ");
+    throw new Error(`"${letter}" is not a grade on the ${id} scale. Valid letters are ${valid}. Accepted grade formats are 'B+', 87, '87%'.`);
   }
   return found;
 }
 
-export function bandFor(scale: ScaleId, grade: string | number): Band {
+export function bandFor(scale: string, grade: string | number): Band {
   const g = parseGrade(grade);
   return g.kind === "percent" ? bandForPercent(scale, g.percent) : bandForLetter(scale, g.letter);
 }
@@ -131,11 +146,12 @@ export interface CourseInput {
   grade: string | number;
 }
 
-export function gpa(courses: CourseInput[], scale: ScaleId, prior?: { gpa: number; credits: number }) {
+export function gpa(courses: CourseInput[], scale: string, prior?: { gpa: number; credits: number }) {
+  const id = assertScale(scale);
   if (courses.length === 0) throw new Error("Add at least one course.");
   const rows = courses.map((c, i) => {
     if (!(c.credits > 0)) throw new Error(`Course ${c.name ?? i + 1} needs credits greater than 0.`);
-    const band = bandFor(scale, c.grade);
+    const band = bandFor(id, c.grade);
     return { name: c.name ?? `Course ${i + 1}`, credits: c.credits, letter: band.letter, points: band.points, quality: band.points * c.credits };
   });
   const credits = rows.reduce((s, r) => s + r.credits, 0);

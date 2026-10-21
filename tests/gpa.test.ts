@@ -114,6 +114,18 @@ describe("MCP tools", () => {
     expect(r.isError).toBe(true);
     expect(r.text).toContain("Valid letters");
   });
+  it("gives a friendly error for a bad scale", async () => {
+    const r = await call("convert_grade", { grade: "A", scale: "ontario" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Valid scale ids");
+    expect(r.text).toContain("ontario-college");
+  });
+  it("gives a friendly error for a bad grade format", async () => {
+    const r = await call("convert_grade", { grade: "A++", scale: "us4" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Accepted grade formats");
+    expect(r.text).toContain("'B+', 87, '87%'");
+  });
   it("explains impossible targets", async () => {
     const r = await call("needed_on_final", { current_percent: 50, final_weight_percent: 10, target_percent: 90 });
     expect(r.text).toContain("out of reach");
