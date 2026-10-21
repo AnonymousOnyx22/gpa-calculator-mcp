@@ -22,6 +22,7 @@
 
 ## Unreleased
 
+- Added install configs for ChatGPT, Cursor and VS Code Copilot to the README. The install section now has a part for each app with the config file that app reads, so people who look for this server by cursor mcp, copilot mcp or chatgpt mcp find the steps they need. The tools, the parameters and the numbers the tools return are unchanged.
 - calculate_gpa now stops with an error when only one of prior_gpa and prior_credits is passed. Before this the half request was quietly dropped, so the student got a term GPA with no sign that the earlier terms were left out. The error says which of the two is missing. The tool names, the parameters and the numbers the tools return are unchanged, and passing both still gives the cumulative GPA.
 - Added the search terms students actually type to the keywords in package.json: cgpa, cgpa calculator, sgpa, sgpa calculator, target grade and target grade calculator. The list before this had 34 keywords and none of them covered a cumulative GPA, a semester GPA or a target grade calculator, so a search for those words found nothing. The npm description now names CGPA, SGPA and the target grade as well, and the server.json description was rewritten to fit inside the 100 character registry limit.
 - The calculate_gpa tool description now says which number is the term GPA and which is the cumulative GPA, so a question about a CGPA or an SGPA lands on the right tool. The tool names, the parameters and the numbers the tools return are unchanged.

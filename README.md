@@ -18,7 +18,19 @@ Run it straight from npm with `npx`. You need Node.js 20 or newer, see [Node ver
 npx -y gpa-calculator-mcp
 ```
 
-Add it to your AI app's MCP config so the app can start it for you. For Claude Desktop that is `claude_desktop_config.json`.
+Add it to your AI app's MCP config so the app can start it for you. Every app reads its config from its own file, so pick yours:
+
+- [Claude Desktop](#claude-desktop)
+- [Claude Code](#claude-code)
+- [ChatGPT](#chatgpt)
+- [Cursor](#cursor)
+- [VS Code Copilot](#vs-code-copilot)
+
+All of them start the same server the same way. The only difference is where the config goes.
+
+### Claude Desktop
+
+Add this to `claude_desktop_config.json`:
 
 ```json
 {
@@ -31,7 +43,82 @@ Add it to your AI app's MCP config so the app can start it for you. For Claude D
 }
 ```
 
-For Claude Code, run `claude mcp add gpa -- npx -y gpa-calculator-mcp`. Restart your AI app after the config change.
+Restart Claude Desktop after you save the file.
+
+### Claude Code
+
+Run this in a terminal:
+
+```bash
+claude mcp add gpa -- npx -y gpa-calculator-mcp
+```
+
+### ChatGPT
+
+The ChatGPT desktop app can start a server that runs on your computer. Open Settings, choose MCP servers, add a server, pick STDIO and give it the command `npx` with the arguments `-y gpa-calculator-mcp`. Save the server and restart the app.
+
+The desktop app, the Codex CLI and the IDE extension read the same config file, `~/.codex/config.toml`, so you can write the server there instead:
+
+```toml
+[mcp_servers.gpa]
+command = "npx"
+args = ["-y", "gpa-calculator-mcp"]
+```
+
+Type `/mcp` in a chat to see the servers that are connected.
+
+The ChatGPT website talks to servers over the web, so it needs a public HTTPS address. Put a tunnel in front of a server that runs on your computer, then add it as a custom MCP server from the Plugins page.
+
+### Cursor
+
+Cursor reads `mcp.json` from the project folder at `.cursor/mcp.json`, or from your home folder at `~/.cursor/mcp.json` if you want the server in every project. On Windows the home folder file is `%USERPROFILE%\.cursor\mcp.json`.
+
+```json
+{
+  "mcpServers": {
+    "gpa": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "gpa-calculator-mcp"]
+    }
+  }
+}
+```
+
+Restart Cursor after you save the file. The Customize page in the sidebar lists the server once it starts, and you can turn it on or off there.
+
+### VS Code Copilot
+
+Put this in `.vscode/mcp.json` in your project folder, or in the `mcp.json` file in your user profile:
+
+```json
+{
+  "servers": {
+    "gpa": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "gpa-calculator-mcp"]
+    }
+  }
+}
+```
+
+VS Code also reads a portable `.mcp.json` file in the project root. That file uses the name `mcpServers` instead of `servers`:
+
+```json
+{
+  "mcpServers": {
+    "gpa": {
+      "command": "npx",
+      "args": ["-y", "gpa-calculator-mcp"]
+    }
+  }
+}
+```
+
+Restart VS Code after you save the file.
+
+After any of these, try one of the prompts below.
 
 ## Try these three prompts
 
