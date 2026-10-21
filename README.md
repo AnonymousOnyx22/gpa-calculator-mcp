@@ -4,7 +4,7 @@
 [![downloads](https://img.shields.io/npm/dm/gpa-calculator-mcp.svg)](https://www.npmjs.com/package/gpa-calculator-mcp)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is the gpa calculator mcp for AI apps. Ask it to work out your GPA, plan the GPA you need to hit a target, convert grades between letters and percentages, and figure out what you need on the final. The math is done by tested code, not guessed by the model.
+GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is the gpa calculator mcp for AI apps. Ask it to work out your GPA, your cumulative GPA (CGPA) or your semester GPA (SGPA), plan the GPA you need to hit a target, convert grades between letters and percentages, and figure out what grade you need on the final. The math is done by tested code, not guessed by the model.
 
 Use it with Claude, ChatGPT, Cursor, VS Code Copilot and any other app that supports MCP. It runs on your computer, needs no internet and no login, and never sees your school account.
 
@@ -61,6 +61,7 @@ More things you can ask:
 - "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
 - "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 - "What's my GPA on the UK classification scale if I got a 2:1, a 2:2 and a first?"
+- "What's my CGPA? I had a 3.2 GPA over 45 credits and this term I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits."
 - "Show me the grade scales you have built in."
 
 ## Tools
@@ -95,6 +96,10 @@ The two UK and Australian scales turn a class or a letter into grade points so t
 
 
 ## FAQ
+
+What is the difference between CGPA and SGPA?
+
+SGPA is the GPA for one term, so the GPA for the courses you pass in. CGPA is the cumulative GPA over every term you have finished. calculate_gpa gives you the term GPA for the courses you pass. Add your earlier GPA and credits as prior_gpa and prior_credits and the tool also gives the cumulative GPA.
 
 Can I include my GPA from last semester?
 

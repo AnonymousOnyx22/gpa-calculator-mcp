@@ -19,6 +19,7 @@ export const tools: ToolDef<Api>[] = [
     title: "Calculate GPA",
     description:
       "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. " +
+      "The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. " +
       "Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
       'Example prompt: "What\'s my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"',
     inputSchema: {

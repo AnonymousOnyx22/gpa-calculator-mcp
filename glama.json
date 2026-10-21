@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "gpa-calculator-mcp",
-  "description": "GPA calculator MCP server for AI apps. Calculate GPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account.",
+  "description": "GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account.",
   "type": "stdio",
   "license": "MIT",
   "repository": {
@@ -16,7 +16,7 @@
   "tools": [
     {
       "name": "calculate_gpa",
-      "description": "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Example prompt: \"What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?\"",
+      "description": "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Example prompt: \"What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?\"",
       "parameters": [
         {
           "name": "courses",

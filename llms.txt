@@ -1,6 +1,6 @@
 # gpa-calculator-mcp
 
-> GPA calculator MCP server for AI apps. Calculate GPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account. Free and open source, works with Claude, ChatGPT, Cursor, Copilot and others.
+> GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account. Free and open source, works with Claude, ChatGPT, Cursor, Copilot and others.
 
 ## Setup
 - Run with npx -y gpa-calculator-mcp
@@ -86,7 +86,7 @@ The weighted-5.0 table is a plain mapping rather than one school's official tabl
 Every tool below has its parameters and one example call. An example call is JSON in the MCP tools/call shape: the tool name plus its arguments. All six tools are read only.
 
 ### calculate_gpa
-Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. Inputs: courses (each with credits greater than 0 and a grade that is a letter like "B+" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Example prompt: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
+Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. Inputs: courses (each with credits greater than 0 and a grade that is a letter like "B+" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Example prompt: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
 
 Parameters:
 - courses (array, required): The courses to include. Each needs credits (greater than 0) and a grade (a letter like "B+" or a percentage like 87). name is optional.
@@ -163,6 +163,10 @@ Example call: `{"name":"list_scales","arguments":{}}`
 Output: the six scales from the tables above, one line per letter with the percentage range and the grade points.
 
 ## FAQ
+
+What is the difference between CGPA and SGPA?
+
+SGPA is the GPA for one term, so the GPA for the courses you pass in. CGPA is the cumulative GPA over every term you have finished. calculate_gpa gives you the term GPA for the courses you pass. Add your earlier GPA and credits as prior_gpa and prior_credits and the tool also gives the cumulative GPA.
 
 Can I include my GPA from last semester?
 
