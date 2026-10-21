@@ -85,6 +85,16 @@ Every tool description sent to your AI app ends with one example prompt, so the 
 Schools differ. Run `list_scales` to see the exact table used, and tell your AI if your school's cutoffs are different.
 
 
+## Use it with Brightspace or Canvas MCP
+
+If you already pull grades from your learning system, you can combine them with this calculator. Brightspace MCP and Canvas MCP can fetch your grades from your course sites. Then you can ask this server to work out your GPA or figure out what you need on the final.
+
+- Pull your grades with Brightspace MCP, then call `calculate_gpa` or `needed_on_final` on the numbers it gives you.
+- Pull your grades with Canvas MCP, then call `calculate_gpa` or `needed_on_final` on the numbers it gives you.
+
+Both are free and open source. See the list below for links.
+
+
 ## Development
 
 ```bash
