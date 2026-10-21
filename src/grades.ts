@@ -204,8 +204,10 @@ export function weighted(parts: Part[]) {
     totalWeight: round(total),
     doneWeight: round(doneWeight),
     remainingWeight: round(remaining),
-    currentGrade: doneWeight > 0 ? round(earned) : null,
-    markedAverage: doneWeight > 0 ? round((earned / doneWeight) * 100) : null,
+    // the grade so far is the average of the marked work, the way an LMS gradebook shows it
+    currentGrade: doneWeight > 0 ? round((earned / doneWeight) * 100) : null,
+    // points already banked out of the 100 the whole course is worth
+    earnedPoints: round(earned),
     worstFinish: round(earned),
     bestFinish: round(earned + remaining),
   };

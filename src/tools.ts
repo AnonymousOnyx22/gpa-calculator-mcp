@@ -105,10 +105,8 @@ export const tools: ToolDef<Api>[] = [
       const lines = a.parts.map((p: any) => `${p.name}: weight ${p.weight}%, ${p.score == null ? "not marked yet" : `${p.score}%`}`);
       let now = "Nothing is marked yet.";
       if (r.currentGrade !== null) {
-        now = `Grade so far: ${r.currentGrade}% of the course.`;
-        if (r.markedAverage !== null && r.markedAverage !== r.currentGrade) {
-          now += ` The ${r.doneWeight}% of the course that is marked averages ${r.markedAverage}%.`;
-        }
+        now = `Grade so far: ${r.currentGrade}% on the ${r.doneWeight}% of the course that is marked.`;
+        if (r.doneWeight < 100) now += ` That banks ${r.earnedPoints} of the 100 points the course is worth.`;
       }
       return `${bullets(lines)}\n\n${now}\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.`;
     },

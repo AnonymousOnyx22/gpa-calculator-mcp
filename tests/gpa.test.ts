@@ -68,8 +68,8 @@ describe("grade math", () => {
   });
   it("handles weighted parts with unmarked work", () => {
     const r = weighted([{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }, { name: "Exam", weight: 50 }]);
-    expect(r.currentGrade).toBe(38); // 17 + 21 points out of a course worth 100
-    expect(r.markedAverage).toBe(76); // (17 + 21) / 50
+    expect(r.currentGrade).toBe(76); // (17 + 21) / 50, the average of the marked work
+    expect(r.earnedPoints).toBe(38); // 17 + 21 points out of a course worth 100
     expect(r.worstFinish).toBe(38);
     expect(r.bestFinish).toBe(88);
   });
@@ -78,15 +78,15 @@ describe("grade math", () => {
     expect(r.totalWeight).toBe(50);
     expect(r.doneWeight).toBe(50);
     expect(r.remainingWeight).toBe(50); // the exam that was not listed is still to come
-    expect(r.currentGrade).toBe(38);
-    expect(r.markedAverage).toBe(76);
+    expect(r.currentGrade).toBe(76);
+    expect(r.earnedPoints).toBe(38);
     expect(r.worstFinish).toBe(38); // not 76, the weights are percentages of the course
     expect(r.bestFinish).toBe(88);
   });
   it("counts nothing as marked when no part has a score", () => {
     const r = weighted([{ name: "Quizzes", weight: 20 }, { name: "Exam", weight: 80 }]);
     expect(r.currentGrade).toBe(null);
-    expect(r.markedAverage).toBe(null);
+    expect(r.earnedPoints).toBe(0);
     expect(r.worstFinish).toBe(0);
     expect(r.bestFinish).toBe(100);
   });
@@ -153,7 +153,8 @@ describe("MCP tools", () => {
   });
   it("keeps the worst finish honest when only some parts are known", async () => {
     const r = await call("weighted_grade", { parts: [{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }] });
-    expect(r.text).toContain("Grade so far: 38% of the course");
+    expect(r.text).toContain("Grade so far: 76% on the 50% of the course that is marked");
+    expect(r.text).toContain("That banks 38 of the 100 points the course is worth");
     expect(r.text).toContain("you finish at 38%");
     expect(r.text).toContain("you finish at 88%");
     expect(r.text).not.toContain("finish at 76%");
