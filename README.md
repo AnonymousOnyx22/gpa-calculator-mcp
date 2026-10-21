@@ -91,6 +91,21 @@ Schools differ. Run `list_scales` to see the exact table used, and tell your AI 
 The two UK and Australian scales turn a class or a letter into grade points so the GPA tools can add up your work. For the UK table, a first is 4.0, a 2:1 is 3.3, a 2:2 is 2.7 and a third is 2.0. A UK degree is normally reported as a class, not a GPA, so treat those points as a way to compare and plan, not as an official number. Pass a class in a letter field as `1st`, `2:1`, `2:2` or `3rd`, or pass a percentage and the server picks the class for you. The `weighted-5.0` table is a plain mapping rather than one school's official table: it keeps the `us4` cutoffs and puts every letter above F one point higher, so an A is 5.0. Pick it when your school reports a weighted GPA on a 5.0 top.
 
 
+## FAQ
+
+Can I include my GPA from last semester?
+
+Yes. Pass your earlier GPA as prior_gpa and your earlier credits as prior_credits to calculate_gpa, along with this term's courses. The tool folds them into a cumulative GPA. Pass both together; passing only one does nothing.
+
+What if my school uses a 4.3 scale?
+
+Use the us4plus scale. It is the us4 scale with A+ worth 4.3. Pass scale "us4plus" to calculate_gpa, convert_grade or target_gpa_planner. Run list_scales to see the full table.
+
+What grade do I need to pass?
+
+It depends on your school and program. On the built in us4 scale, D covers 60 to 66 percent and is usually the lowest passing grade, but many programs require a C or higher. Use needed_on_final to work out what you need on the final, or target_gpa_planner to plan a cumulative GPA. Check your school's handbook for the real cutoff.
+
+
 ## Use it with Brightspace or Canvas MCP
 
 If you already pull grades from your learning system, you can combine them with this calculator. Brightspace MCP and Canvas MCP can fetch your grades from your course sites. Then you can ask this server to work out your GPA or figure out what you need on the final.
