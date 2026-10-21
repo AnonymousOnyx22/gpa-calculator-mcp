@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, gpa, neededOnFinal, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, gpa, neededOnFinal, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -21,6 +21,7 @@ export const tools: ToolDef<Api>[] = [
       "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. " +
       "The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. " +
       "Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
+      "Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. " +
       'Example prompt: "What\'s my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"',
     inputSchema: {
       courses: z
@@ -28,11 +29,11 @@ export const tools: ToolDef<Api>[] = [
         .min(1)
         .describe("The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional."),
       scale,
-      prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA."),
-      prior_credits: z.number().min(0).optional().describe("Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA."),
+      prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),
+      prior_credits: z.number().min(0).optional().describe("Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA. Passing only one of the two is an error."),
     },
     run: async (a) => {
-      const prior = a.prior_gpa !== undefined && a.prior_credits !== undefined ? { gpa: a.prior_gpa, credits: a.prior_credits } : undefined;
+      const prior = resolvePrior(a.prior_gpa, a.prior_credits);
       const scaleId = assertScale(a.scale);
       const r = gpa(a.courses, scaleId, prior);
       const lines = r.rows.map((c) => `${c.name}: ${c.letter}, ${c.points.toFixed(1)} points x ${c.credits} credits`);

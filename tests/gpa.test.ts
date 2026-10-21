@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
-import { bandForPercent, bandForLetter, neededOnFinal, resolveTarget, weighted, gpa, targetGpaPlanner } from "../src/grades.js";
+import { bandForPercent, bandForLetter, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner } from "../src/grades.js";
 
 let client: Client;
 beforeAll(async () => {
@@ -60,6 +60,14 @@ describe("grade math", () => {
     const r = gpa([{ credits: 3, grade: "A" }, { credits: 4, grade: "B+" }, { credits: 3, grade: "C" }], "us4", { gpa: 3.0, credits: 30 });
     expect(r.term).toBe(3.12); // (12 + 13.2 + 6) / 10
     expect(r.cumulative).toBe(3.03); // (90 + 31.2) / 40
+  });
+  it("asks for the other half of the earlier work when only one is given", () => {
+    expect(() => resolvePrior(3.0, undefined)).toThrow(/prior_credits/);
+    expect(() => resolvePrior(undefined, 30)).toThrow(/prior_gpa/);
+  });
+  it("takes the earlier work as a pair or leaves it out", () => {
+    expect(resolvePrior(3.0, 30)).toEqual({ gpa: 3.0, credits: 30 });
+    expect(resolvePrior(undefined, undefined)).toBeUndefined();
   });
   it("solves the final exam question", () => {
     expect(neededOnFinal(74, 40, 80).needed).toBe(89); // 80 = 74*.6 + x*.4 so x = 35.6 / .4
@@ -176,6 +184,24 @@ describe("MCP tools", () => {
   it("calculates GPA and accepts percentages and letters together", async () => {
     const r = await call("calculate_gpa", { courses: [{ name: "Net", credits: 3, grade: "A" }, { name: "Scripting", credits: 3, grade: 78 }], scale: "ontario-college" });
     expect(r.text).toContain("GPA for these courses: 3.75");
+  });
+  it("errors when the earlier GPA comes without the earlier credits", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }], prior_gpa: 3.2 });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("prior_credits");
+    expect(r.text).not.toContain("GPA for these courses");
+  });
+  it("errors when the earlier credits come without the earlier GPA", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }], prior_credits: 45 });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("prior_gpa");
+    expect(r.text).not.toContain("GPA for these courses");
+  });
+  it("gives a cumulative GPA when the earlier work comes as a pair", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }], prior_gpa: 3.2, prior_credits: 45 });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("GPA for these courses: 4.00");
+    expect(r.text).toContain("Cumulative GPA with earlier work: 3.25 across 48 credits");
   });
   it("gives a friendly error for a bad letter", async () => {
     const r = await call("convert_grade", { grade: "Z", scale: "us4" });

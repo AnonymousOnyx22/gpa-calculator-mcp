@@ -146,6 +146,26 @@ export interface CourseInput {
   grade: string | number;
 }
 
+/**
+ * The earlier work has to come as a pair. A GPA with no credits behind it, or credits
+ * with no GPA, cannot be folded in, so one half on its own is an error rather than a
+ * request that is quietly dropped.
+ */
+export function resolvePrior(priorGpa?: number, priorCredits?: number): { gpa: number; credits: number } | undefined {
+  if (priorGpa !== undefined && priorCredits !== undefined) return { gpa: priorGpa, credits: priorCredits };
+  if (priorGpa !== undefined) {
+    throw new Error(
+      "Pass prior_credits as well, or leave both out. Earlier terms are only folded in when prior_gpa and prior_credits come together, so one on its own would be left out.",
+    );
+  }
+  if (priorCredits !== undefined) {
+    throw new Error(
+      "Pass prior_gpa as well, or leave both out. Earlier terms are only folded in when prior_gpa and prior_credits come together, so one on its own would be left out.",
+    );
+  }
+  return undefined;
+}
+
 export function gpa(courses: CourseInput[], scale: string, prior?: { gpa: number; credits: number }) {
   const id = assertScale(scale);
   if (courses.length === 0) throw new Error("Add at least one course.");

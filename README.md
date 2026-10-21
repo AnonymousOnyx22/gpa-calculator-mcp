@@ -70,7 +70,7 @@ Six tools. These names are the ones your AI app sees.
 
 | Tool | Parameters | What it does |
 | --- | --- | --- |
-| `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA |
+| `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA. Pass `prior_gpa` and `prior_credits` together, or leave both out |
 | `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
 | `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent`, `target_letter`, `scale` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach. Give the target as a percent or as a letter such as `B+` or `2:1`, and the cutoff comes from the scale table |
 | `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come |
@@ -103,7 +103,7 @@ SGPA is the GPA for one term, so the GPA for the courses you pass in. CGPA is th
 
 Can I include my GPA from last semester?
 
-Yes. Pass your earlier GPA as prior_gpa and your earlier credits as prior_credits to calculate_gpa, along with this term's courses. The tool folds them into a cumulative GPA. Pass both together; passing only one does nothing.
+Yes. Pass your earlier GPA as prior_gpa and your earlier credits as prior_credits to calculate_gpa, along with this term's courses. The tool folds them into a cumulative GPA. Pass both together. Passing only one of the two is an error, so the tool says which one is missing instead of quietly leaving the earlier terms out.
 
 What if my school uses a 4.3 scale?
 
