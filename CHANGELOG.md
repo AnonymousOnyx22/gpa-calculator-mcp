@@ -22,6 +22,7 @@
 
 ## Unreleased
 
+- Added a test that asks the server for its own tool list over an in memory link and checks that llms.txt and glama.json list the same tools in the same order, so a tool cannot ship undocumented.
 - Updated the development dependencies to the current releases: TypeScript 7.0.2, Vitest 5.0.5 and the Node type definitions 26.6.5. TypeScript 7 does not pick up the packages in node_modules/@types on its own, so tsconfig.json now names the node types. package-lock.json was regenerated to match. The server code and the tool list did not change.
 - Added a test that keeps package-lock.json in step with package.json and keeps the node types in tsconfig.json.
 - Listed all six tools with their parameters and one example call in llms.txt, and added the same tool list with parameters, examples and the three grade conversion tables to glama.json. Both files now carry the offline, no account claim word for word. Added a test that keeps the two files in step with the code.
