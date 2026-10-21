@@ -124,11 +124,11 @@ After any of these, try one of the prompts below.
 
 1. What do I need on the final?
 
-   > "My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?"
+   > "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"
 
-   The model calls `needed_on_final` with `current_percent` 74, `final_weight_percent` 40 and `target_percent` 80. The tool works out that the other 60% of the course is locked in, so you need 89% on the final to reach 80%.
+   The model calls `needed_on_final` with `current_percent` 85, `final_weight_percent` 40 and `target_letter` "B+" on the `us4` scale. B+ starts at 87% on that scale, so you need 90% on the final to reach it.
 
-   Ask for a letter grade instead and the cutoff comes from the scale table. With `current_percent` 85, `final_weight_percent` 40 and `target_letter` "B+" on the `us4` scale, the tool says you need 90% on the final to reach the 87% where B+ starts.
+   Ask for a percentage target instead and the tool does the same sum. With `current_percent` 74, `final_weight_percent` 40 and `target_percent` 80, the other 60% of the course is locked in, so you need 89% on the final to reach 80%.
 
 2. What is my GPA?
 
@@ -144,7 +144,6 @@ After any of these, try one of the prompts below.
 
 More things you can ask:
 
-- "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"
 - "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
 - "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 - "What's my GPA on the UK classification scale if I got a 2:1, a 2:2 and a first?"
@@ -173,7 +172,7 @@ Every tool description sent to your AI app ends with one example prompt, so the 
 | `us4` | Common US 4.0 scale with plus and minus grades, A is 4.0 and A- is 3.7 |
 | `us4plus` | Same as `us4` but A+ is 4.3 |
 | `ontario-college` | A common Ontario college 4.0 scale, A+ and A are 4.0, B+ is 3.5. Check your own school's table |
-| `uk-classification` | UK degree classification boundaries, a first, a 2:1, a 2:2 and a third. Check your own school's table |
+| `uk-classification` | UK degree classification boundaries, a first, a 2:1, a 2:2 and a third, where a first is worth 4.0 grade points. Check your own school's table |
 | `australia-hd` | Australian 7.0 scale, HD is 7, D is 6, C is 5 and P is 4. Check your own school's table |
 | `weighted-5.0` | US weighted 5.0 scale, the `us4` cutoffs with every letter above F one point higher, so A is 5.0. Check your own school's table |
 
@@ -198,7 +197,7 @@ Use the us4plus scale. It is the us4 scale with A+ worth 4.3. Pass scale "us4plu
 
 What grade do I need to pass?
 
-It depends on your school and program. On the built in us4 scale, D covers 60 to 66 percent and is usually the lowest passing grade, but many programs require a C or higher. Use needed_on_final to work out what you need on the final, or target_gpa_planner to plan a cumulative GPA. Check your school's handbook for the real cutoff.
+It depends on your school and program. On the built in us4 scale, D covers 63 to 66 percent and is usually the lowest passing grade, but many programs require a C or higher. Use needed_on_final to work out what you need on the final, or target_gpa_planner to plan a cumulative GPA. Check your school's handbook for the real cutoff.
 
 Can I ask for a letter grade instead of a percentage?
 
@@ -206,7 +205,7 @@ Yes. Pass `target_letter` to `needed_on_final`, for example `target_letter` "B+"
 
 Do my course parts have to add up to 100?
 
-No. Every weight in weighted_grade is a percentage of the whole course, so you can pass only the parts you know. If you pass 20 percent quizzes and 30 percent labs with scores of 85 and 70, the tool says you have 38 percent of the course grade so far, you finish at 38 percent if you score 0 on everything left, and you finish at 88 percent if you score 100 on everything left. The other 50 percent of the course is still to come. Weights that add up to more than 100 are an error, because a course is graded out of 100.
+No. Every weight in weighted_grade is a percentage of the whole course, so you can pass only the parts you know. If you pass 20 percent quizzes and 30 percent labs with scores of 85 and 70, the tool says your grade so far is 76 percent, which banks 38 of the 100 points the course is worth, you finish at 38 percent if you score 0 on everything left, and you finish at 88 percent if you score 100 on everything left. The other 50 percent of the course is still to come. Weights that add up to more than 100 are an error, because a course is graded out of 100.
 
 
 ## Use it with Brightspace or Canvas MCP
