@@ -82,18 +82,34 @@ export const tools: ToolDef<Api>[] = [
     title: "Weighted grade",
     description:
       "Combine weighted course parts into the grade so far, plus the worst and best possible finish. " +
-      "Inputs: parts (each with a name, a weight that is a percentage greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). " +
+      "Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). " +
+      "A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. " +
       'Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What\'s my grade so far and what\'s the best I can finish with?"',
     inputSchema: {
       parts: z
-        .array(z.object({ name: z.string(), weight: z.number().gt(0), score: z.number().min(0).max(100).nullable().optional() }))
+        .array(
+          z.object({
+            name: z.string().describe("Name of the course part."),
+            weight: z.number().gt(0).describe("Weight as a percentage of the whole course, greater than 0."),
+            score: z.number().min(0).max(100).nullable().optional().describe("Score between 0 and 100 for marked parts, or leave out for unmarked parts."),
+          }),
+        )
         .min(1)
-        .describe('The weighted parts of the course. Each needs a name and a weight (a percentage greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet.'),
+        .describe(
+          'The weighted parts of the course. Each needs a name and a weight (a percentage of the whole course greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet. ' +
+            "Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.",
+        ),
     },
     run: async (a) => {
       const r = weighted(a.parts);
       const lines = a.parts.map((p: any) => `${p.name}: weight ${p.weight}%, ${p.score == null ? "not marked yet" : `${p.score}%`}`);
-      const now = r.currentGrade === null ? "Nothing is marked yet." : `Grade so far: ${r.currentGrade}% on the ${r.doneWeight}% of the course that is marked.`;
+      let now = "Nothing is marked yet.";
+      if (r.currentGrade !== null) {
+        now = `Grade so far: ${r.currentGrade}% of the course.`;
+        if (r.markedAverage !== null && r.markedAverage !== r.currentGrade) {
+          now += ` The ${r.doneWeight}% of the course that is marked averages ${r.markedAverage}%.`;
+        }
+      }
       return `${bullets(lines)}\n\n${now}\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.`;
     },
   },

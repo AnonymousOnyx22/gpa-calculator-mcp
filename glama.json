@@ -158,13 +158,13 @@
     },
     {
       "name": "weighted_grade",
-      "description": "Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). Example prompt: \"My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?\"",
+      "description": "Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: \"My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?\"",
       "parameters": [
         {
           "name": "parts",
           "type": "array",
           "required": true,
-          "description": "The weighted parts of the course. Each needs a name and a weight (a percentage greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet.",
+          "description": "The weighted parts of the course. Each needs a name and a weight (a percentage of the whole course greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet. Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.",
           "items": {
             "type": "object",
             "required": [
@@ -178,7 +178,7 @@
               },
               "weight": {
                 "type": "number",
-                "description": "Weight as a percentage, greater than 0."
+                "description": "Weight as a percentage of the whole course, greater than 0."
               },
               "score": {
                 "type": [
@@ -212,7 +212,7 @@
           ]
         }
       },
-      "output": "One line per part (\"Quizzes: weight 20%, 85%\"), then \"Grade so far: 76% on the 50% of the course that is marked.\", then the worst and best possible finish (38% and 88%) and how much of the course is still to come."
+      "output": "One line per part (\"Quizzes: weight 20%, 85%\"), then \"Grade so far: 38% of the course. The 50% of the course that is marked averages 76%.\", then the worst and best possible finish (38% and 88%) and how much of the course is still to come."
     },
     {
       "name": "target_gpa_planner",

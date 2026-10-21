@@ -69,7 +69,7 @@ Six tools. These names are the ones your AI app sees.
 | `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA |
 | `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
 | `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach |
-| `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work |
+| `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come |
 | `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | Plan the GPA you need on upcoming credits to reach a target cumulative GPA |
 | `list_scales` | none | List the grade scales built in, with their letter, percentage and points tables |
 
@@ -104,6 +104,10 @@ Use the us4plus scale. It is the us4 scale with A+ worth 4.3. Pass scale "us4plu
 What grade do I need to pass?
 
 It depends on your school and program. On the built in us4 scale, D covers 60 to 66 percent and is usually the lowest passing grade, but many programs require a C or higher. Use needed_on_final to work out what you need on the final, or target_gpa_planner to plan a cumulative GPA. Check your school's handbook for the real cutoff.
+
+Do my course parts have to add up to 100?
+
+No. Every weight in weighted_grade is a percentage of the whole course, so you can pass only the parts you know. If you pass 20 percent quizzes and 30 percent labs with scores of 85 and 70, the tool says you have 38 percent of the course grade so far, you finish at 38 percent if you score 0 on everything left, and you finish at 88 percent if you score 100 on everything left. The other 50 percent of the course is still to come. Weights that add up to more than 100 are an error, because a course is graded out of 100.
 
 
 ## Use it with Brightspace or Canvas MCP

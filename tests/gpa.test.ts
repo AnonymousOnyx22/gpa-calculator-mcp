@@ -68,9 +68,30 @@ describe("grade math", () => {
   });
   it("handles weighted parts with unmarked work", () => {
     const r = weighted([{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }, { name: "Exam", weight: 50 }]);
-    expect(r.currentGrade).toBe(76); // (17 + 21) / 50
+    expect(r.currentGrade).toBe(38); // 17 + 21 points out of a course worth 100
+    expect(r.markedAverage).toBe(76); // (17 + 21) / 50
     expect(r.worstFinish).toBe(38);
     expect(r.bestFinish).toBe(88);
+  });
+  it("does not rescale parts that do not add up to 100", () => {
+    const r = weighted([{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }]);
+    expect(r.totalWeight).toBe(50);
+    expect(r.doneWeight).toBe(50);
+    expect(r.remainingWeight).toBe(50); // the exam that was not listed is still to come
+    expect(r.currentGrade).toBe(38);
+    expect(r.markedAverage).toBe(76);
+    expect(r.worstFinish).toBe(38); // not 76, the weights are percentages of the course
+    expect(r.bestFinish).toBe(88);
+  });
+  it("counts nothing as marked when no part has a score", () => {
+    const r = weighted([{ name: "Quizzes", weight: 20 }, { name: "Exam", weight: 80 }]);
+    expect(r.currentGrade).toBe(null);
+    expect(r.markedAverage).toBe(null);
+    expect(r.worstFinish).toBe(0);
+    expect(r.bestFinish).toBe(100);
+  });
+  it("rejects weights that add up to more than 100", () => {
+    expect(() => weighted([{ name: "Quizzes", weight: 60, score: 85 }, { name: "Exam", weight: 60 }])).toThrow(/add up to 120 percent/);
   });
   it("plans a target GPA", () => {
     expect(targetGpaPlanner(3.1, 60, 3.4, 15, 4).needed).toBe(4.6);
@@ -129,6 +150,18 @@ describe("MCP tools", () => {
   it("explains impossible targets", async () => {
     const r = await call("needed_on_final", { current_percent: 50, final_weight_percent: 10, target_percent: 90 });
     expect(r.text).toContain("out of reach");
+  });
+  it("keeps the worst finish honest when only some parts are known", async () => {
+    const r = await call("weighted_grade", { parts: [{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }] });
+    expect(r.text).toContain("Grade so far: 38% of the course");
+    expect(r.text).toContain("you finish at 38%");
+    expect(r.text).toContain("you finish at 88%");
+    expect(r.text).not.toContain("finish at 76%");
+  });
+  it("gives a friendly error when the weights add up to more than 100", async () => {
+    const r = await call("weighted_grade", { parts: [{ name: "Quizzes", weight: 60, score: 85 }, { name: "Exam", weight: 60 }] });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("100 percent");
   });
   it("lists the scales", async () => {
     const r = await call("list_scales");

@@ -125,17 +125,17 @@ Example call: `{"name":"needed_on_final","arguments":{"current_percent":74,"fina
 Output: "You need 89% on the final (worth 40%) to finish with 80%, starting from 74% on the rest."
 
 ### weighted_grade
-Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
+Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 
 Parameters:
-- parts (array, required): The weighted parts of the course. Each needs a name and a weight (a percentage greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet.
+- parts (array, required): The weighted parts of the course. Each needs a name and a weight (a percentage of the whole course greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet. Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.
   - name (string, required): Name of the course part.
-  - weight (number, required): Weight as a percentage, greater than 0.
+  - weight (number, required): Weight as a percentage of the whole course, greater than 0.
   - score (number or null, optional): Score between 0 and 100 for marked parts, or leave out for unmarked parts.
 
 Example call: `{"name":"weighted_grade","arguments":{"parts":[{"name":"Quizzes","weight":20,"score":85},{"name":"Labs","weight":30,"score":70},{"name":"Exam","weight":50}]}}`
 
-Output: one line per part ("Quizzes: weight 20%, 85%"), then "Grade so far: 76% on the 50% of the course that is marked.", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.
+Output: one line per part ("Quizzes: weight 20%, 85%"), then "Grade so far: 38% of the course. The 50% of the course that is marked averages 76%.", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.
 
 ### target_gpa_planner
 Plan the GPA needed on upcoming credits to reach a target cumulative GPA. Inputs: current_gpa (0 to 7), credits_completed (0 or more), target_gpa (0 to 7), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. Says so when the target is already reached or would take more than one term. Example prompt: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
@@ -173,6 +173,10 @@ Use the us4plus scale. It is the us4 scale with A+ worth 4.3. Pass scale "us4plu
 What grade do I need to pass?
 
 It depends on your school and program. On the built in us4 scale, D covers 60 to 66 percent and is usually the lowest passing grade, but many programs require a C or higher. Use needed_on_final to work out what you need on the final, or target_gpa_planner to plan a cumulative GPA. Check your school's handbook for the real cutoff.
+
+Do my course parts have to add up to 100?
+
+No. Every weight in weighted_grade is a percentage of the whole course, so you can pass only the parts you know. If you pass 20 percent quizzes and 30 percent labs with scores of 85 and 70, the tool says you have 38 percent of the course grade so far, you finish at 38 percent if you score 0 on everything left, and you finish at 88 percent if you score 100 on everything left. The other 50 percent of the course is still to come. Weights that add up to more than 100 are an error, because a course is graded out of 100.
 
 ## Links
 - Source and README, https://github.com/AnonymousOnyx22/gpa-calculator-mcp

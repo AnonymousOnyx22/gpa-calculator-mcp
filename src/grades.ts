@@ -181,21 +181,33 @@ export interface Part {
   score?: number | null;
 }
 
+/** A course is graded out of 100 percent, so the weights of its parts add up to 100. */
+const COURSE_PERCENT = 100;
+
+/**
+ * Works out the grade so far, plus the worst and best finish, from the parts of a course.
+ * A weight is a percentage of the whole course, so the parts are never rescaled. Parts that
+ * were left out still count as work to come, because the course is worth 100 percent.
+ */
 export function weighted(parts: Part[]) {
   const total = parts.reduce((s, p) => s + p.weight, 0);
   if (total <= 0) throw new Error("Weights need to add up to more than 0.");
+  if (total > COURSE_PERCENT) {
+    throw new Error(`The weights add up to ${round(total)} percent. A course is graded out of 100 percent, so the weights need to add up to 100 or less.`);
+  }
   const done = parts.filter((p) => p.score !== undefined && p.score !== null);
   const doneWeight = done.reduce((s, p) => s + p.weight, 0);
   const earned = done.reduce((s, p) => s + (p.weight * (p.score as number)) / 100, 0);
-  const remaining = total - doneWeight;
+  // Everything that is not marked yet is still to come, whether it was listed as a part or not.
+  const remaining = COURSE_PERCENT - doneWeight;
   return {
     totalWeight: round(total),
     doneWeight: round(doneWeight),
     remainingWeight: round(remaining),
-    earnedPoints: round(earned),
-    currentGrade: doneWeight > 0 ? round((earned / doneWeight) * 100) : null,
-    worstFinish: round((earned / total) * 100),
-    bestFinish: round(((earned + remaining) / total) * 100),
+    currentGrade: doneWeight > 0 ? round(earned) : null,
+    markedAverage: doneWeight > 0 ? round((earned / doneWeight) * 100) : null,
+    worstFinish: round(earned),
+    bestFinish: round(earned + remaining),
   };
 }
 
