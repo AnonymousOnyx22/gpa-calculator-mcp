@@ -165,6 +165,8 @@ Six tools. These names are the ones your AI app sees.
 
 Every tool description sent to your AI app ends with one example prompt, so the model can match a question like "What do I need on the final?" to the right tool and fill in every parameter.
 
+Every tool also returns the same numbers as structured data. Each tool has an output schema, so a client that reads JSON gets fields such as `term_gpa` or `needed_percent` straight away, and the text answer stays the same for an app that only reads words. The fields each tool returns are listed in [llms.txt](llms.txt) and in [glama.json](glama.json).
+
 ## Grade scales
 
 | Scale id | Description |
@@ -206,6 +208,10 @@ Yes. Pass `target_letter` to `needed_on_final`, for example `target_letter` "B+"
 Do my course parts have to add up to 100?
 
 No. Every weight in weighted_grade is a percentage of the whole course, so you can pass only the parts you know. If you pass 20 percent quizzes and 30 percent labs with scores of 85 and 70, the tool says your grade so far is 76 percent, which banks 38 of the 100 points the course is worth, you finish at 38 percent if you score 0 on everything left, and you finish at 88 percent if you score 100 on everything left. The other 50 percent of the course is still to come. Weights that add up to more than 100 are an error, because a course is graded out of 100.
+
+Can a script read the numbers without reading the sentence?
+
+Yes. Every tool has an output schema and returns the numbers as fields next to the text, so a script can read `term_gpa` or `needed_percent` without taking them out of the sentence. The text answer is the same as it has always been.
 
 
 ## Use it with Brightspace or Canvas MCP

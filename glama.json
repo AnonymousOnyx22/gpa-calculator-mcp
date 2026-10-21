@@ -91,7 +91,8 @@
           "scale": "us4"
         }
       },
-      "output": "One line per course (\"Calculus: A, 4.0 points x 3 credits\"), then \"GPA for these courses: 3.12 across 10 credits (US 4.0 scale).\" Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing."
+      "output": "One line per course (\"Calculus: A, 4.0 points x 3 credits\"), then \"GPA for these courses: 3.12 across 10 credits (US 4.0 scale).\" Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing.",
+      "structured_output": "scale, scale_name, courses, credits, term_gpa, cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points."
     },
     {
       "name": "convert_grade",
@@ -121,7 +122,8 @@
           "scale": "ontario-college"
         }
       },
-      "output": "\"78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points.\""
+      "output": "\"78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points.\"",
+      "structured_output": "scale, scale_name, letter, min_percent, max_percent and points."
     },
     {
       "name": "needed_on_final",
@@ -168,7 +170,8 @@
           "scale": "us4"
         }
       },
-      "output": "\"You need 90% on the final (worth 40%) to finish with the grade B+, which starts at 87% on the US 4.0 scale. You have 85% on the rest of the course.\" Give target_percent 80 instead of a letter and the tool says you need 72.5% on the final to finish with 80%."
+      "output": "\"You need 90% on the final (worth 40%) to finish with the grade B+, which starts at 87% on the US 4.0 scale. You have 85% on the rest of the course.\" Give target_percent 80 instead of a letter and the tool says you need 72.5% on the final to finish with 80%.",
+      "structured_output": "scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given."
     },
     {
       "name": "weighted_grade",
@@ -226,7 +229,8 @@
           ]
         }
       },
-      "output": "One line per part (\"Quizzes: weight 20%, 85%\"), then \"Grade so far: 38% of the course. The 50% of the course that is marked averages 76%.\", then the worst and best possible finish (38% and 88%) and how much of the course is still to come."
+      "output": "One line per part (\"Quizzes: weight 20%, 85%\"), then \"Grade so far: 76% on the 50% of the course that is marked. That banks 38 of the 100 points the course is worth.\", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.",
+      "structured_output": "parts, total_weight, done_weight, remaining_weight, current_grade, earned_points, worst_finish and best_finish. The parts array holds one entry per part with name, weight and score."
     },
     {
       "name": "target_gpa_planner",
@@ -274,7 +278,8 @@
           "scale": "us4"
         }
       },
-      "output": "\"You would need 4.6 on the next 15 credits, but the top of this scale is 4.0. Reaching 3.4 would take more than one term.\" Ask for 3.2 instead of 3.4 and the same call needs a 3.60 GPA."
+      "output": "\"You would need 4.6 on the next 15 credits, but the top of this scale is 4.0. Reaching 3.4 would take more than one term.\" Ask for 3.2 instead of 3.4 and the same call needs a 3.60 GPA.",
+      "structured_output": "scale, scale_name, current_gpa, credits_completed, target_gpa, upcoming_credits, needed_gpa, max_points, possible and already_there."
     },
     {
       "name": "list_scales",
@@ -284,7 +289,8 @@
         "name": "list_scales",
         "arguments": {}
       },
-      "output": "The six scales from the gradeScales list below, one line per letter with the percentage range and the grade points."
+      "output": "The six scales from the gradeScales list below, one line per letter with the percentage range and the grade points.",
+      "structured_output": "scales, an array with one entry per scale. Each entry has id, name and a bands array, and each band has letter, min_percent, max_percent and points."
     }
   ],
   "gradeScales": [

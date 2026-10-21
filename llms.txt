@@ -85,6 +85,8 @@ The weighted-5.0 table is a plain mapping rather than one school's official tabl
 
 Every tool below has its parameters and one example call. An example call is JSON in the MCP tools/call shape: the tool name plus its arguments. All six tools are read only.
 
+Every tool also has an output schema and returns the numbers as fields next to the text, so a client that reads JSON gets the numbers without taking them out of the sentence. The Structured output line under each tool names the fields.
+
 ### calculate_gpa
 Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. Inputs: courses (each with credits greater than 0 and a grade that is a letter like "B+" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. Example prompt: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
 
@@ -101,6 +103,8 @@ Example call: `{"name":"calculate_gpa","arguments":{"courses":[{"name":"Calculus
 
 Output: one line per course ("Calculus: A, 4.0 points x 3 credits"), then "GPA for these courses: 3.12 across 10 credits (US 4.0 scale)." Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing.
 
+Structured output: scale, scale_name, courses, credits, term_gpa, cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points.
+
 ### convert_grade
 Convert a letter or percentage into the matching letter, percentage range and grade points on a grade scale. Inputs: grade (a letter like "B+" or a percentage like 87 or "87%") and a scale id. Example prompt: "Convert 78 percent to a letter grade on the Ontario college scale."
 
@@ -111,6 +115,8 @@ Parameters:
 Example call: `{"name":"convert_grade","arguments":{"grade":78,"scale":"ontario-college"}}`
 
 Output: "78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points."
+
+Structured output: scale, scale_name, letter, min_percent, max_percent and points.
 
 ### needed_on_final
 Calculate the score needed on a final exam or last assignment to reach a target course grade. Inputs: current_percent (the average on all the other work, 0 to 100), final_weight_percent (how much the final is worth, greater than 0 and at most 100) and a target. Give the target as target_percent (the course grade you want, 0 to 100), as target_letter (a letter like "B+" or a class like "2:1", whose cutoff comes from the scale table), or as both. The scale id sets the table the letter cutoff comes from. Says so when the target is already locked in or out of reach. Example prompt: "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"
@@ -126,6 +132,8 @@ Example call: `{"name":"needed_on_final","arguments":{"current_percent":85,"fina
 
 Output: "You need 90% on the final (worth 40%) to finish with the grade B+, which starts at 87% on the US 4.0 scale. You have 85% on the rest of the course." Give target_percent 80 instead of a letter and the tool says you need 72.5% on the final to finish with 80%.
 
+Structured output: scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given.
+
 ### weighted_grade
 Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 
@@ -137,7 +145,9 @@ Parameters:
 
 Example call: `{"name":"weighted_grade","arguments":{"parts":[{"name":"Quizzes","weight":20,"score":85},{"name":"Labs","weight":30,"score":70},{"name":"Exam","weight":50}]}}`
 
-Output: one line per part ("Quizzes: weight 20%, 85%"), then "Grade so far: 38% of the course. The 50% of the course that is marked averages 76%.", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.
+Output: one line per part ("Quizzes: weight 20%, 85%"), then "Grade so far: 76% on the 50% of the course that is marked. That banks 38 of the 100 points the course is worth.", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.
+
+Structured output: parts, total_weight, done_weight, remaining_weight, current_grade, earned_points, worst_finish and best_finish. The parts array holds one entry per part with name, weight and score.
 
 ### target_gpa_planner
 Plan the GPA needed on upcoming credits to reach a target cumulative GPA. Inputs: current_gpa (0 to 7), credits_completed (0 or more), target_gpa (0 to 7), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. Says so when the target is already reached or would take more than one term. Example prompt: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
@@ -153,6 +163,8 @@ Example call: `{"name":"target_gpa_planner","arguments":{"current_gpa":3.1,"cred
 
 Output: "You would need 4.6 on the next 15 credits, but the top of this scale is 4.0. Reaching 3.4 would take more than one term." Ask for 3.2 instead of 3.4 and the same call needs a 3.60 GPA.
 
+Structured output: scale, scale_name, current_gpa, credits_completed, target_gpa, upcoming_credits, needed_gpa, max_points, possible and already_there.
+
 ### list_scales
 List the built-in grade scales with their letters, percentage ranges and grade points. Inputs: none. Example prompt: "Show me the grade scales you have built in."
 
@@ -161,6 +173,8 @@ Parameters: none.
 Example call: `{"name":"list_scales","arguments":{}}`
 
 Output: the six scales from the tables above, one line per letter with the percentage range and the grade points.
+
+Structured output: scales, an array with one entry per scale. Each entry has id, name and a bands array, and each band has letter, min_percent, max_percent and points.
 
 ## FAQ
 
@@ -187,6 +201,10 @@ Yes. Pass target_letter to needed_on_final, for example target_letter "B+", and 
 Do my course parts have to add up to 100?
 
 No. Every weight in weighted_grade is a percentage of the whole course, so you can pass only the parts you know. If you pass 20 percent quizzes and 30 percent labs with scores of 85 and 70, the tool says you have 38 percent of the course grade so far, you finish at 38 percent if you score 0 on everything left, and you finish at 88 percent if you score 100 on everything left. The other 50 percent of the course is still to come. Weights that add up to more than 100 are an error, because a course is graded out of 100.
+
+Can a script read the numbers without reading the sentence?
+
+Yes. Every tool has an output schema and returns the numbers as fields next to the text. A client that reads JSON gets term_gpa, needed_percent and the rest straight away, and a client that only reads the text still gets the same answer as before.
 
 ## Links
 - Source and README, https://github.com/AnonymousOnyx22/gpa-calculator-mcp

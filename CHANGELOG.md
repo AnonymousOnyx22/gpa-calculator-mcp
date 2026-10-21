@@ -22,6 +22,10 @@
 
 ## Unreleased
 
+- Every tool now has an output schema and returns the numbers as fields next to the text answer, so a script or a registry listing can read the numbers without taking them out of the sentence. Each tool gives the fields it returns, for example term_gpa for calculate_gpa, needed_percent for needed_on_final and current_grade for weighted_grade. The tool names, the parameters and the words each tool returns are unchanged, and a client that only reads the text still gets the same answer.
+- Listed the fields each tool returns in llms.txt and glama.json, and added a test that keeps those lists in step with the output schemas in the code.
+- Added a test file that checks the structured output over a real MCP client. It calls every tool, checks that the fields match the output schema, and checks the numbers for each tool.
+
 - Added a test file that keeps the README in step with the code. It checks the tool table against the tool list, the three example prompts against the example prompt that each tool description ends with, the numbers the README quotes against what the tools return, and the grade scale table against the scale tables in the code. A README that drifts from the code now fails the test suite. The tools, the parameters and the numbers the tools return are unchanged.
 - Fixed three parts of the README that no longer matched the code. The first example prompt now asks the question the needed_on_final tool carries, the lowest passing band on the us4 scale is 63 to 66 percent instead of 60 to 66, and the weighted grade example says the grade so far is 76 percent, which banks 38 of the 100 points the course is worth. The uk-classification row now says that a first is worth 4.0 grade points.
 

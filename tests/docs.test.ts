@@ -22,6 +22,7 @@ const glama = JSON.parse(readFileSync(new URL("../glama.json", import.meta.url),
     }[];
     example: { name: string; arguments: Record<string, unknown> };
     output: string;
+    structured_output: string;
   }[];
   gradeScales: { id: string; name: string; bands: { letter: string; min: number; max: number; points: number }[] }[];
 };
@@ -35,6 +36,7 @@ interface LlmsTool {
   blocks: { name: string; text: string; fields: string[] }[];
   example: { name: string; arguments: Record<string, unknown> };
   output: string;
+  structuredOutput: string;
 }
 
 /** The tool sections of llms.txt, from the "## Tools" heading down. */
@@ -70,6 +72,7 @@ function parseLlmsTools(text: string): LlmsTool[] {
         blocks,
         example: JSON.parse(exampleText),
         output: /^Output: (.*)$/m.exec(part)?.[1] ?? "",
+        structuredOutput: /^Structured output: (.*)$/m.exec(part)?.[1] ?? "",
       };
     });
 }
@@ -98,6 +101,18 @@ function schemaTypes(schema: unknown): string[] {
   if (s.type) return [s.type];
   if (Array.isArray(s.anyOf)) return s.anyOf.flatMap(schemaTypes).sort();
   return [];
+}
+
+/** The names of every field of a JSON schema, including the fields inside arrays and nested objects. */
+function schemaFields(schema: unknown, names: string[] = []): string[] {
+  const s = schema as { properties?: Record<string, unknown> };
+  for (const [key, def] of Object.entries(s?.properties ?? {})) {
+    names.push(key);
+    const field = def as { items?: unknown; properties?: unknown };
+    if (field.items) schemaFields(field.items, names);
+    if (field.properties) schemaFields(field, names);
+  }
+  return names;
 }
 
 const llmsTools = parseLlmsTools(llms);
@@ -177,6 +192,28 @@ describe("every tool has its parameters and an example", () => {
       const inLlms = llmsTools.find((t) => t.name === tool.name)!.example;
       const inGlama = glama.tools.find((t) => t.name === tool.name)!.example;
       expect(inGlama).toEqual(inLlms);
+    });
+  }
+});
+
+describe("the structured output the docs list", () => {
+  for (const tool of tools) {
+    it(`llms.txt and glama.json name every field of the output schema of ${tool.name}`, () => {
+      const schema = z.toJSONSchema(z.object(tool.outputSchema!), { io: "output" }) as Record<string, unknown>;
+      const fields = schemaFields(schema);
+      expect(fields.length, `the fields of ${tool.name}`).toBeGreaterThan(0);
+      const inLlms = llmsTools.find((t) => t.name === tool.name)!.structuredOutput;
+      const inGlama = glama.tools.find((t) => t.name === tool.name)!.structured_output;
+      for (const field of fields) {
+        expect(inLlms, `llms.txt structured output for ${tool.name}`).toContain(field);
+        expect(inGlama, `glama.json structured output for ${tool.name}`).toContain(field);
+      }
+    });
+
+    it(`llms.txt and glama.json give ${tool.name} the same structured output`, () => {
+      expect(glama.tools.find((t) => t.name === tool.name)!.structured_output).toBe(
+        llmsTools.find((t) => t.name === tool.name)!.structuredOutput,
+      );
     });
   }
 });

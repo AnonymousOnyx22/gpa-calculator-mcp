@@ -13,6 +13,29 @@ const scale = z
   );
 const grade = z.union([z.string(), z.number()]).describe('A letter like "B+" or a percentage like 87 or "87%".');
 
+// The shapes of the fields the tools return. Every tool has one, so a client that reads
+// JSON gets the numbers without taking them out of the sentence.
+const gpaCourseFields = z.object({
+  name: z.string().describe("Name of the course."),
+  credits: z.number().describe("Credits for the course."),
+  letter: z.string().describe("The letter the course counts as on the scale."),
+  points: z.number().describe("Grade points the letter is worth on the scale."),
+  quality_points: z.number().describe("Grade points times credits, what the course adds to the total."),
+});
+
+const partFields = z.object({
+  name: z.string().describe("Name of the course part."),
+  weight: z.number().describe("Weight of the part as a percentage of the whole course."),
+  score: z.number().nullable().describe("Score on the part, or null when the part is not marked yet."),
+});
+
+const bandFields = z.object({
+  letter: z.string().describe("The letter of the band."),
+  min_percent: z.number().describe("The lowest percentage in the band."),
+  max_percent: z.number().describe("The highest percentage in the band."),
+  points: z.number().describe("Grade points the band is worth."),
+});
+
 export const tools: ToolDef<Api>[] = [
   {
     name: "calculate_gpa",
@@ -32,6 +55,15 @@ export const tools: ToolDef<Api>[] = [
       prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),
       prior_credits: z.number().min(0).optional().describe("Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA. Passing only one of the two is an error."),
     },
+    outputSchema: {
+      scale: z.string().describe("The scale id the courses were marked on."),
+      scale_name: z.string().describe("The name of the scale the courses were marked on."),
+      courses: z.array(gpaCourseFields).describe("One entry per course, in the order they were passed."),
+      credits: z.number().describe("The credits of the courses in this call."),
+      term_gpa: z.number().describe("The GPA for these courses alone."),
+      cumulative_gpa: z.number().optional().describe("The GPA with the earlier terms folded in, when prior_gpa and prior_credits were both passed."),
+      cumulative_credits: z.number().optional().describe("The credits of these courses and the earlier terms together, when prior_gpa and prior_credits were both passed."),
+    },
     run: async (a) => {
       const prior = resolvePrior(a.prior_gpa, a.prior_credits);
       const scaleId = assertScale(a.scale);
@@ -39,7 +71,24 @@ export const tools: ToolDef<Api>[] = [
       const lines = r.rows.map((c) => `${c.name}: ${c.letter}, ${c.points.toFixed(1)} points x ${c.credits} credits`);
       let out = `${bullets(lines)}\n\nGPA for these courses: ${r.term.toFixed(2)} across ${r.credits} credits (${SCALES[scaleId].name}).`;
       if (r.cumulative !== undefined) out += `\nCumulative GPA with earlier work: ${r.cumulative.toFixed(2)} across ${r.cumulativeCredits} credits.`;
-      return out;
+      const structured: Record<string, unknown> = {
+        scale: scaleId,
+        scale_name: SCALES[scaleId].name,
+        courses: r.rows.map((c) => ({
+          name: c.name,
+          credits: c.credits,
+          letter: c.letter,
+          points: c.points,
+          quality_points: c.quality,
+        })),
+        credits: r.credits,
+        term_gpa: r.term,
+      };
+      if (r.cumulative !== undefined && r.cumulativeCredits !== undefined) {
+        structured.cumulative_gpa = r.cumulative;
+        structured.cumulative_credits = r.cumulativeCredits;
+      }
+      return { text: out, structured };
     },
   },
   {
@@ -53,10 +102,28 @@ export const tools: ToolDef<Api>[] = [
       grade,
       scale,
     },
+    outputSchema: {
+      scale: z.string().describe("The scale id the grade was converted on."),
+      scale_name: z.string().describe("The name of the scale the grade was converted on."),
+      letter: z.string().describe("The letter the grade matches on the scale."),
+      min_percent: z.number().describe("The lowest percentage the letter covers."),
+      max_percent: z.number().describe("The highest percentage the letter covers."),
+      points: z.number().describe("Grade points the letter is worth on the scale."),
+    },
     run: async (a) => {
       const scaleId = assertScale(a.scale);
       const b = bandFor(scaleId, a.grade);
-      return `${a.grade} is ${b.letter} on the ${SCALES[scaleId].name}. That letter covers ${b.min} to ${b.max} percent and is worth ${b.points.toFixed(1)} grade points.`;
+      return {
+        text: `${a.grade} is ${b.letter} on the ${SCALES[scaleId].name}. That letter covers ${b.min} to ${b.max} percent and is worth ${b.points.toFixed(1)} grade points.`,
+        structured: {
+          scale: scaleId,
+          scale_name: SCALES[scaleId].name,
+          letter: b.letter,
+          min_percent: b.min,
+          max_percent: b.max,
+          points: b.points,
+        },
+      };
     },
   },
   {
@@ -76,28 +143,56 @@ export const tools: ToolDef<Api>[] = [
       target_letter: z.string().optional().describe('The letter grade you want to finish with, like "B+" or "2:1", read from the scale table. Leave it out when you pass target_percent.'),
       scale,
     },
+    outputSchema: {
+      scale: z.string().describe("The scale id the target was read from."),
+      scale_name: z.string().describe("The name of the scale the target was read from."),
+      current_percent: z.number().describe("The grade on the work already done."),
+      final_weight_percent: z.number().describe("How much the final is worth, as a percentage of the whole course."),
+      target_percent: z.number().describe("The course grade to finish with, as a percentage."),
+      target_letter: z.string().optional().describe("The letter target that was asked for, when one was given."),
+      letter_min_percent: z.number().optional().describe("The lowest percentage the letter target covers, when a letter target was given."),
+      needed_percent: z.number().describe("The score needed on the final. It is below 0 when the target is already reached, and above 100 when the target is out of reach."),
+      possible: z.boolean().describe("True when the target can be reached with this weighting."),
+      already_there: z.boolean().describe("True when the target is already reached, so a 0 on the final keeps it."),
+    },
     run: async (a) => {
       const scaleId = assertScale(a.scale);
       const target = resolveTarget(scaleId, { percent: a.target_percent, letter: a.target_letter });
       const r = neededOnFinal(a.current_percent, a.final_weight_percent, target.percent);
       const band = target.band;
       const scaleName = SCALES[scaleId].name;
+      const structured: Record<string, unknown> = {
+        scale: scaleId,
+        scale_name: scaleName,
+        current_percent: a.current_percent,
+        final_weight_percent: a.final_weight_percent,
+        target_percent: target.percent,
+        needed_percent: r.needed,
+        possible: r.possible,
+        already_there: r.alreadyThere,
+      };
+      if (band) {
+        structured.target_letter = band.letter;
+        structured.letter_min_percent = band.min;
+      }
+      let text: string;
       if (!band) {
-        if (r.alreadyThere) return `You already have the ${target.percent}% locked in. Even a 0 on the final keeps you at or above it.`;
-        if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. ${target.percent}% is out of reach with this weighting.`;
-        return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${target.percent}%, starting from ${a.current_percent}% on the rest.`;
-      }
-      // The letter cutoff is the goal, unless the student also asked for a higher percent.
-      if (target.percent > band.min) {
+        if (r.alreadyThere) text = `You already have the ${target.percent}% locked in. Even a 0 on the final keeps you at or above it.`;
+        else if (!r.possible) text = `You would need ${r.needed}% on the final, which is more than 100%. ${target.percent}% is out of reach with this weighting.`;
+        else text = `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${target.percent}%, starting from ${a.current_percent}% on the rest.`;
+      } else if (target.percent > band.min) {
+        // The letter cutoff is the goal, unless the student also asked for a higher percent.
         const note = `${band.letter} starts at ${band.min}% on the ${scaleName}`;
-        if (r.alreadyThere) return `You already have ${target.percent}% locked in (${note}). Even a 0 on the final keeps you at or above it.`;
-        if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. ${target.percent}% (${note}) is out of reach with this weighting.`;
-        return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${target.percent}% (${note}), starting from ${a.current_percent}% on the rest.`;
+        if (r.alreadyThere) text = `You already have ${target.percent}% locked in (${note}). Even a 0 on the final keeps you at or above it.`;
+        else if (!r.possible) text = `You would need ${r.needed}% on the final, which is more than 100%. ${target.percent}% (${note}) is out of reach with this weighting.`;
+        else text = `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${target.percent}% (${note}), starting from ${a.current_percent}% on the rest.`;
+      } else {
+        const goal = `the grade ${band.letter}`;
+        if (r.alreadyThere) text = `You already have ${goal} locked in. It starts at ${band.min}% on the ${scaleName}, and even a 0 on the final keeps you at or above it.`;
+        else if (!r.possible) text = `You would need ${r.needed}% on the final, which is more than 100%. The grade ${band.letter} starts at ${band.min}% on the ${scaleName}, so it is out of reach with this weighting.`;
+        else text = `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${goal}, which starts at ${band.min}% on the ${scaleName}. You have ${a.current_percent}% on the rest of the course.`;
       }
-      const goal = `the grade ${band.letter}`;
-      if (r.alreadyThere) return `You already have ${goal} locked in. It starts at ${band.min}% on the ${scaleName}, and even a 0 on the final keeps you at or above it.`;
-      if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. The grade ${band.letter} starts at ${band.min}% on the ${scaleName}, so it is out of reach with this weighting.`;
-      return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${goal}, which starts at ${band.min}% on the ${scaleName}. You have ${a.current_percent}% on the rest of the course.`;
+      return { text, structured };
     },
   },
   {
@@ -123,6 +218,16 @@ export const tools: ToolDef<Api>[] = [
             "Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.",
         ),
     },
+    outputSchema: {
+      parts: z.array(partFields).describe("One entry per part, in the order they were passed."),
+      total_weight: z.number().describe("The weights of the parts added together, as a percentage of the whole course."),
+      done_weight: z.number().describe("The weight of the marked parts, as a percentage of the whole course."),
+      remaining_weight: z.number().describe("The weight of the course that is still to come, as a percentage of the whole course."),
+      current_grade: z.number().nullable().describe("The average on the marked work, or null when nothing is marked yet."),
+      earned_points: z.number().describe("The points already banked out of the 100 the whole course is worth."),
+      worst_finish: z.number().describe("The course grade if every remaining part scores 0."),
+      best_finish: z.number().describe("The course grade if every remaining part scores 100."),
+    },
     run: async (a) => {
       const r = weighted(a.parts);
       const lines = a.parts.map((p: any) => `${p.name}: weight ${p.weight}%, ${p.score == null ? "not marked yet" : `${p.score}%`}`);
@@ -131,7 +236,20 @@ export const tools: ToolDef<Api>[] = [
         now = `Grade so far: ${r.currentGrade}% on the ${r.doneWeight}% of the course that is marked.`;
         if (r.doneWeight < 100) now += ` That banks ${r.earnedPoints} of the 100 points the course is worth.`;
       }
-      return `${bullets(lines)}\n\n${now}\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.`;
+      const text = `${bullets(lines)}\n\n${now}\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.`;
+      return {
+        text,
+        structured: {
+          parts: a.parts.map((p: any) => ({ name: p.name, weight: p.weight, score: p.score ?? null })),
+          total_weight: r.totalWeight,
+          done_weight: r.doneWeight,
+          remaining_weight: r.remainingWeight,
+          current_grade: r.currentGrade,
+          earned_points: r.earnedPoints,
+          worst_finish: r.worstFinish,
+          best_finish: r.bestFinish,
+        },
+      };
     },
   },
   {
@@ -149,13 +267,41 @@ export const tools: ToolDef<Api>[] = [
       upcoming_credits: z.number().gt(0).describe("Credits you will take next, greater than 0."),
       scale,
     },
+    outputSchema: {
+      scale: z.string().describe("The scale id the plan was made on."),
+      scale_name: z.string().describe("The name of the scale the plan was made on."),
+      current_gpa: z.number().describe("The cumulative GPA so far."),
+      credits_completed: z.number().describe("The credits already completed."),
+      target_gpa: z.number().describe("The cumulative GPA to reach."),
+      upcoming_credits: z.number().describe("The credits you will take next."),
+      needed_gpa: z.number().describe("The GPA needed on the upcoming credits. It is below 0 when the target is already reached, and above the top of the scale when the target takes more than one term."),
+      max_points: z.number().describe("The top grade point the scale allows."),
+      possible: z.boolean().describe("True when the target can be reached in one term on this scale."),
+      already_there: z.boolean().describe("True when the target is already reached, so a 0.0 on the upcoming credits keeps it."),
+    },
     run: async (a) => {
       const scaleId = assertScale(a.scale);
       const max = Math.max(...SCALES[scaleId].bands.map((b) => b.points));
       const r = targetGpaPlanner(a.current_gpa, a.credits_completed, a.target_gpa, a.upcoming_credits, max);
-      if (r.alreadyThere) return `You are already above ${a.target_gpa}. Even a 0.0 over the next ${a.upcoming_credits} credits keeps you at or above it.`;
-      if (!r.possible) return `You would need ${r.needed} on the next ${a.upcoming_credits} credits, but the top of this scale is ${max.toFixed(1)}. Reaching ${a.target_gpa} would take more than one term.`;
-      return `You need a ${r.needed.toFixed(2)} GPA on the next ${a.upcoming_credits} credits to reach a cumulative ${a.target_gpa} (from ${a.current_gpa} over ${a.credits_completed} credits).`;
+      let text: string;
+      if (r.alreadyThere) text = `You are already above ${a.target_gpa}. Even a 0.0 over the next ${a.upcoming_credits} credits keeps you at or above it.`;
+      else if (!r.possible) text = `You would need ${r.needed} on the next ${a.upcoming_credits} credits, but the top of this scale is ${max.toFixed(1)}. Reaching ${a.target_gpa} would take more than one term.`;
+      else text = `You need a ${r.needed.toFixed(2)} GPA on the next ${a.upcoming_credits} credits to reach a cumulative ${a.target_gpa} (from ${a.current_gpa} over ${a.credits_completed} credits).`;
+      return {
+        text,
+        structured: {
+          scale: scaleId,
+          scale_name: SCALES[scaleId].name,
+          current_gpa: a.current_gpa,
+          credits_completed: a.credits_completed,
+          target_gpa: a.target_gpa,
+          upcoming_credits: a.upcoming_credits,
+          needed_gpa: r.needed,
+          max_points: max,
+          possible: r.possible,
+          already_there: r.alreadyThere,
+        },
+      };
     },
   },
   {
@@ -166,9 +312,33 @@ export const tools: ToolDef<Api>[] = [
       "Inputs: none. " +
       'Example prompt: "Show me the grade scales you have built in."',
     inputSchema: {},
-    run: async () =>
-      (Object.keys(SCALES) as ScaleId[])
-        .map((id) => `${id}, ${SCALES[id].name}\n${SCALES[id].bands.map((b) => `  ${b.letter}  ${b.min}-${b.max}%  ${b.points.toFixed(1)}`).join("\n")}`)
-        .join("\n\n") + ``,
+    outputSchema: {
+      scales: z
+        .array(
+          z.object({
+            id: z.string().describe("The scale id to pass to a tool that takes one."),
+            name: z.string().describe("The name of the scale."),
+            bands: z.array(bandFields).describe("The bands of the scale, from the highest grade down."),
+          }),
+        )
+        .describe("Every built-in scale, with its letters, percentage ranges and grade points."),
+    },
+    run: async () => {
+      const ids = Object.keys(SCALES) as ScaleId[];
+      const text =
+        ids
+          .map((id) => `${id}, ${SCALES[id].name}\n${SCALES[id].bands.map((b) => `  ${b.letter}  ${b.min}-${b.max}%  ${b.points.toFixed(1)}`).join("\n")}`)
+          .join("\n\n") + ``;
+      return {
+        text,
+        structured: {
+          scales: ids.map((id) => ({
+            id,
+            name: SCALES[id].name,
+            bands: SCALES[id].bands.map((b) => ({ letter: b.letter, min_percent: b.min, max_percent: b.max, points: b.points })),
+          })),
+        },
+      };
+    },
   },
 ];

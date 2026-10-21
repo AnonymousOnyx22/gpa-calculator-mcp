@@ -4,24 +4,34 @@ import { ApiError } from "./http.js";
 
 export type Shape = Record<string, z.ZodTypeAny>;
 
+export interface ToolOutput {
+  /** The answer in words, the text the tool has always returned. */
+  text: string;
+  /** The same answer as fields, shaped by the output schema of the tool. */
+  structured: Record<string, unknown>;
+}
+
 export interface ToolDef<Api> {
   name: string;
   title: string;
   description: string;
   inputSchema: Shape;
-  run: (args: any, api: Api) => Promise<string>;
+  /** The shape of the fields the tool returns, so a client can read the numbers. */
+  outputSchema?: Shape;
+  run: (args: any, api: Api) => Promise<ToolOutput>;
 }
 
 export interface ToolResult {
   [key: string]: unknown;
   content: { type: "text"; text: string }[];
+  structuredContent?: Record<string, unknown>;
   isError?: boolean;
 }
 
 export async function runTool<Api>(tool: ToolDef<Api>, args: unknown, api: Api): Promise<ToolResult> {
   try {
-    const text = await tool.run(args, api);
-    return { content: [{ type: "text", text }] };
+    const out = await tool.run(args, api);
+    return { content: [{ type: "text", text: out.text }], structuredContent: out.structured };
   } catch (err) {
     const msg = err instanceof ApiError ? err.message : `Something went wrong: ${(err as Error).message}`;
     return { content: [{ type: "text", text: msg }], isError: true };
@@ -36,6 +46,7 @@ export function registerTools<Api>(server: McpServer, tools: ToolDef<Api>[], api
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
+        outputSchema: tool.outputSchema,
         annotations: { readOnlyHint: true, openWorldHint: true },
       },
       async (args: unknown) => runTool(tool, args, api),

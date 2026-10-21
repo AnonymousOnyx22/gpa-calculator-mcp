@@ -104,7 +104,7 @@ function featuredFor(name: string): Featured {
 async function runTool(name: string, args: Record<string, unknown>): Promise<string> {
   const tool = tools.find((t) => t.name === name);
   if (!tool) throw new Error(`there is no tool called ${name}`);
-  return tool.run(args, null);
+  return (await tool.run(args, null)).text;
 }
 
 /** The words the README uses for a UK class. */
