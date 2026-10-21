@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Add Brightspace and Canvas MCP usage section to README
+
 ## 0.1.2
 
 - Small fixes and clearer docs
