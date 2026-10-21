@@ -12,7 +12,7 @@ Free forever. No account and no subscription.
 
 ## Install
 
-Run it straight from npm with `npx`. You need Node.js 20 or newer. There is nothing else to install, no account and no config file for the server itself.
+Run it straight from npm with `npx`. You need Node.js 20 or newer, see [Node version](#node-version) for the details. There is nothing else to install, no account and no config file for the server itself.
 
 ```bash
 npx -y gpa-calculator-mcp
@@ -116,6 +116,19 @@ If you already pull grades from your learning system, you can combine them with 
 Both are free and open source. See the list below for links.
 
 
+## Node version
+
+There are two floors here, and they are not the same number.
+
+| What you are doing | Node.js |
+| --- | --- |
+| Running the published server | 20 or newer |
+| Building and testing a clone | 22.12 or newer, on the 22 and 24 release lines or 26 and later |
+
+The server itself is happy on Node.js 20, and that is what `engines` in package.json says. The test runner wants a newer Node.js, so the development floor lives in `devEngines` in the same file. npm checks `devEngines` before install, run and test, so a clone on Node.js 20 stops with a clear message instead of a strange failure part way through the test suite. The 23 and 25 release lines are left out on purpose, because the test runner does not run on them.
+
+Both numbers live in package.json, and a test in `tests/node-version.test.ts` keeps them in step with the README and with the range the test runner asks for.
+
 ## Development
 
 ```bash
@@ -124,7 +137,7 @@ npm run build
 npm test
 ```
 
-The tests call every tool through a real MCP client, so they need no account or network. Running the tests needs Node.js 22.12 or newer, because of the test runner. The server itself runs on Node.js 20 or newer.
+The tests call every tool through a real MCP client, so they need no account or network. They need the newer Node.js from the Node version section above, because of the test runner.
 
 ## More free student MCP servers
 
