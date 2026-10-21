@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
-import { bandForPercent, bandForLetter, neededOnFinal, weighted, gpa, targetGpaPlanner } from "../src/grades.js";
+import { bandForPercent, bandForLetter, neededOnFinal, resolveTarget, weighted, gpa, targetGpaPlanner } from "../src/grades.js";
 
 let client: Client;
 beforeAll(async () => {
@@ -66,6 +66,21 @@ describe("grade math", () => {
     expect(neededOnFinal(95, 20, 60).alreadyThere).toBe(true);
     expect(neededOnFinal(50, 10, 90).possible).toBe(false);
   });
+  it("reads a letter target from the scale table", () => {
+    expect(resolveTarget("us4", { letter: "B+" }).percent).toBe(87);
+    expect(resolveTarget("us4", { letter: "b+" }).band?.letter).toBe("B+");
+    expect(resolveTarget("uk-classification", { letter: "2:1" }).percent).toBe(60);
+    expect(resolveTarget("australia-hd", { letter: "HD" }).percent).toBe(80);
+    expect(resolveTarget("ontario-college", { letter: "B+" }).percent).toBe(75);
+  });
+  it("keeps a percent target and takes the higher one when both are given", () => {
+    expect(resolveTarget("us4", { percent: 80 }).percent).toBe(80);
+    expect(resolveTarget("us4", { percent: 80, letter: "B+" }).percent).toBe(87);
+    expect(resolveTarget("us4", { percent: 95, letter: "B+" }).percent).toBe(95);
+  });
+  it("asks for a target when there is none", () => {
+    expect(() => resolveTarget("us4", {})).toThrow(/target_percent/);
+  });
   it("handles weighted parts with unmarked work", () => {
     const r = weighted([{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }, { name: "Exam", weight: 50 }]);
     expect(r.currentGrade).toBe(76); // (17 + 21) / 50, the average of the marked work
@@ -125,6 +140,38 @@ describe("MCP tools", () => {
   it("answers the final exam question in words", async () => {
     const r = await call("needed_on_final", { current_percent: 74, final_weight_percent: 40, target_percent: 80 });
     expect(r.text).toContain("89%");
+  });
+  it("takes a letter target and reads the cutoff from the scale", async () => {
+    const r = await call("needed_on_final", { current_percent: 85, final_weight_percent: 40, target_letter: "B+", scale: "us4" });
+    expect(r.text).toContain("90%");
+    expect(r.text).toContain("B+");
+    expect(r.text).toContain("87%");
+  });
+  it("takes a UK class as the target", async () => {
+    const r = await call("needed_on_final", { current_percent: 55, final_weight_percent: 50, target_letter: "2:1", scale: "uk-classification" });
+    expect(r.text).toContain("65%");
+    expect(r.text).toContain("2:1");
+    expect(r.text).toContain("60%");
+  });
+  it("takes the higher target when a percent and a letter are both given", async () => {
+    const r = await call("needed_on_final", { current_percent: 85, final_weight_percent: 40, target_percent: 88, target_letter: "B+", scale: "us4" });
+    expect(r.text).toContain("92.5%");
+    expect(r.text).toContain("B+ starts at 87%");
+  });
+  it("says when a letter target is out of reach", async () => {
+    const r = await call("needed_on_final", { current_percent: 74, final_weight_percent: 40, target_letter: "A", scale: "us4" });
+    expect(r.text).toContain("out of reach");
+  });
+  it("asks for a target when the tool gets none", async () => {
+    const r = await call("needed_on_final", { current_percent: 74, final_weight_percent: 40 });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("target_percent");
+    expect(r.text).toContain("target_letter");
+  });
+  it("gives a friendly error for a letter that is not on the scale", async () => {
+    const r = await call("needed_on_final", { current_percent: 74, final_weight_percent: 40, target_letter: "Z", scale: "us4" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Valid letters");
   });
   it("calculates GPA and accepts percentages and letters together", async () => {
     const r = await call("calculate_gpa", { courses: [{ name: "Net", credits: 3, grade: "A" }, { name: "Scripting", credits: 3, grade: 78 }], scale: "ontario-college" });

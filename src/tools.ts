@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, gpa, neededOnFinal, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, gpa, neededOnFinal, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -62,19 +62,40 @@ export const tools: ToolDef<Api>[] = [
     title: "What do I need on the final",
     description:
       "Calculate the score needed on a final exam or last assignment to reach a target course grade. " +
-      "Inputs: current_percent (the average on all the other work, 0 to 100), final_weight_percent (how much the final is worth, greater than 0 and at most 100) and target_percent (the course grade you want, 0 to 100). " +
+      "Inputs: current_percent (the average on all the other work, 0 to 100), final_weight_percent (how much the final is worth, greater than 0 and at most 100) and a target. " +
+      "Give the target as target_percent (the course grade you want, 0 to 100), as target_letter (a letter like \"B+\" or a class like \"2:1\", whose cutoff comes from the scale table), or as both. " +
+      "The scale id sets the table the letter cutoff comes from. " +
       "Says so when the target is already locked in or out of reach. " +
-      'Example prompt: "My grade is 74% and the final is worth 40% of the course. What do I need on the final to finish with 80%?"',
+      'Example prompt: "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"',
     inputSchema: {
       current_percent: z.number().min(0).max(100).describe("Current grade on the work already done, as a percentage between 0 and 100."),
       final_weight_percent: z.number().gt(0).max(100).describe("How much the final is worth, greater than 0 and at most 100, as a percentage of the whole course."),
-      target_percent: z.number().min(0).max(100).describe("The course grade you want to finish with, as a percentage between 0 and 100."),
+      target_percent: z.number().min(0).max(100).optional().describe("The course grade you want to finish with, as a percentage between 0 and 100. Leave it out when you pass target_letter."),
+      target_letter: z.string().optional().describe('The letter grade you want to finish with, like "B+" or "2:1", read from the scale table. Leave it out when you pass target_percent.'),
+      scale,
     },
     run: async (a) => {
-      const r = neededOnFinal(a.current_percent, a.final_weight_percent, a.target_percent);
-      if (r.alreadyThere) return `You already have the ${a.target_percent}% locked in. Even a 0 on the final keeps you at or above it.`;
-      if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. ${a.target_percent}% is out of reach with this weighting.`;
-      return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${a.target_percent}%, starting from ${a.current_percent}% on the rest.`;
+      const scaleId = assertScale(a.scale);
+      const target = resolveTarget(scaleId, { percent: a.target_percent, letter: a.target_letter });
+      const r = neededOnFinal(a.current_percent, a.final_weight_percent, target.percent);
+      const band = target.band;
+      const scaleName = SCALES[scaleId].name;
+      if (!band) {
+        if (r.alreadyThere) return `You already have the ${target.percent}% locked in. Even a 0 on the final keeps you at or above it.`;
+        if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. ${target.percent}% is out of reach with this weighting.`;
+        return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${target.percent}%, starting from ${a.current_percent}% on the rest.`;
+      }
+      // The letter cutoff is the goal, unless the student also asked for a higher percent.
+      if (target.percent > band.min) {
+        const note = `${band.letter} starts at ${band.min}% on the ${scaleName}`;
+        if (r.alreadyThere) return `You already have ${target.percent}% locked in (${note}). Even a 0 on the final keeps you at or above it.`;
+        if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. ${target.percent}% (${note}) is out of reach with this weighting.`;
+        return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${target.percent}% (${note}), starting from ${a.current_percent}% on the rest.`;
+      }
+      const goal = `the grade ${band.letter}`;
+      if (r.alreadyThere) return `You already have ${goal} locked in. It starts at ${band.min}% on the ${scaleName}, and even a 0 on the final keeps you at or above it.`;
+      if (!r.possible) return `You would need ${r.needed}% on the final, which is more than 100%. The grade ${band.letter} starts at ${band.min}% on the ${scaleName}, so it is out of reach with this weighting.`;
+      return `You need ${r.needed}% on the final (worth ${a.final_weight_percent}%) to finish with ${goal}, which starts at ${band.min}% on the ${scaleName}. You have ${a.current_percent}% on the rest of the course.`;
     },
   },
   {

@@ -41,6 +41,8 @@ For Claude Code, run `claude mcp add gpa -- npx -y gpa-calculator-mcp`. Restart 
 
    The model calls `needed_on_final` with `current_percent` 74, `final_weight_percent` 40 and `target_percent` 80. The tool works out that the other 60% of the course is locked in, so you need 89% on the final to reach 80%.
 
+   Ask for a letter grade instead and the cutoff comes from the scale table. With `current_percent` 85, `final_weight_percent` 40 and `target_letter` "B+" on the `us4` scale, the tool says you need 90% on the final to reach the 87% where B+ starts.
+
 2. What is my GPA?
 
    > "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
@@ -55,6 +57,7 @@ For Claude Code, run `claude mcp add gpa -- npx -y gpa-calculator-mcp`. Restart 
 
 More things you can ask:
 
+- "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"
 - "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
 - "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 - "What's my GPA on the UK classification scale if I got a 2:1, a 2:2 and a first?"
@@ -68,7 +71,7 @@ Six tools. These names are the ones your AI app sees.
 | --- | --- | --- |
 | `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA |
 | `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
-| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach |
+| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent`, `target_letter`, `scale` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach. Give the target as a percent or as a letter such as `B+` or `2:1`, and the cutoff comes from the scale table |
 | `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come |
 | `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | Plan the GPA you need on upcoming credits to reach a target cumulative GPA |
 | `list_scales` | none | List the grade scales built in, with their letter, percentage and points tables |
@@ -104,6 +107,10 @@ Use the us4plus scale. It is the us4 scale with A+ worth 4.3. Pass scale "us4plu
 What grade do I need to pass?
 
 It depends on your school and program. On the built in us4 scale, D covers 60 to 66 percent and is usually the lowest passing grade, but many programs require a C or higher. Use needed_on_final to work out what you need on the final, or target_gpa_planner to plan a cumulative GPA. Check your school's handbook for the real cutoff.
+
+Can I ask for a letter grade instead of a percentage?
+
+Yes. Pass `target_letter` to `needed_on_final`, for example `target_letter` "B+", and the tool looks the cutoff up in the scale table. Pass `scale` "uk-classification" for a UK class such as 2:1. You can pass `target_percent` as well, and the tool works to the higher of the two.
 
 Do my course parts have to add up to 100?
 

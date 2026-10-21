@@ -166,6 +166,28 @@ export function gpa(courses: CourseInput[], scale: string, prior?: { gpa: number
   return { rows, credits, term: round(term), cumulative: cumulative === undefined ? undefined : round(cumulative), cumulativeCredits };
 }
 
+export interface TargetGoal {
+  percent?: number;
+  letter?: string;
+}
+
+/**
+ * Turns a goal into the percentage the student has to finish with. A letter is looked up in
+ * the scale table, so a goal like B+ or 2:1 uses the cutoff that scale gives. When both a
+ * percent and a letter are given, the higher of the two is the goal.
+ */
+export function resolveTarget(scale: string, goal: TargetGoal): { percent: number; band?: Band } {
+  const id = assertScale(scale);
+  const letter = goal.letter?.trim();
+  const band = letter ? bandForLetter(id, letter) : undefined;
+  const percent = goal.percent;
+  if (percent !== undefined) {
+    return band ? { percent: Math.max(percent, band.min), band } : { percent, band: undefined };
+  }
+  if (band) return { percent: band.min, band };
+  throw new Error("Pass a target_percent, a target_letter, or both.");
+}
+
 export function neededOnFinal(current: number, finalWeight: number, target: number) {
   if (!(finalWeight > 0 && finalWeight <= 100)) throw new Error("The final's weight must be between 0 and 100 percent.");
   if (current < 0 || current > 100 || target < 0 || target > 100) throw new Error("Grades must be percentages between 0 and 100.");
