@@ -12,6 +12,6 @@ Install it with:
 npx -y gpa-calculator-mcp
 ```
 
-Then add it to the MCP config of Claude Desktop, Cursor, VS Code Copilot, ChatGPT or any other app that supports MCP. The README has the exact config for each one.
+Then add it to the MCP config of Claude Desktop, Claude Code, Cursor, VS Code Copilot or any other app that runs a local MCP server. The README has the exact config for each one.
 
 If you try it and a number looks wrong, tell me. I would rather fix a scale table than have someone plan a semester on a bad number.
