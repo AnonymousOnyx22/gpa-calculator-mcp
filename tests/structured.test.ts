@@ -63,6 +63,12 @@ describe("the tools return structured content", () => {
       needed_on_final: { current_percent: 85, final_weight_percent: 40, target_letter: "B+" },
       weighted_grade: { parts: [{ name: "Quizzes", weight: 20, score: 85 }] },
       target_gpa_planner: { current_gpa: 3.1, credits_completed: 60, target_gpa: 3.4, upcoming_credits: 15 },
+      plan_courses: {
+        current_gpa: 3.4,
+        credits_completed: 60,
+        target_gpa: 3.5,
+        courses: [{ name: "Calculus", credits: 3 }, { name: "Physics", credits: 3 }],
+      },
       list_scales: {},
     };
     for (const tool of tools) {
@@ -200,6 +206,42 @@ describe("the tools return structured content", () => {
     expect(r.structured!.max_points).toBe(4);
     expect(r.structured!.possible).toBe(false);
     expect(r.structured!.already_there).toBe(false);
+  });
+
+  it("gives the grade each upcoming course needs", async () => {
+    const r = await call("plan_courses", {
+      current_gpa: 3.4,
+      credits_completed: 60,
+      target_gpa: 3.5,
+      courses: [
+        { name: "Calculus", credits: 3 },
+        { name: "Physics", credits: 3 },
+        { name: "History", credits: 3 },
+        { name: "Spanish", credits: 3 },
+      ],
+      scale: "us4",
+    });
+    expect(r.structured!.upcoming_credits).toBe(12);
+    expect(r.structured!.needed_gpa).toBe(4);
+    expect(r.structured!.possible).toBe(true);
+    expect(r.structured!.courses).toEqual([
+      { name: "Calculus", credits: 3, target_letter: "A", target_min_percent: 93, target_points: 4 },
+      { name: "Physics", credits: 3, target_letter: "A", target_min_percent: 93, target_points: 4 },
+      { name: "History", credits: 3, target_letter: "A", target_min_percent: 93, target_points: 4 },
+      { name: "Spanish", credits: 3, target_letter: "A", target_min_percent: 93, target_points: 4 },
+    ]);
+  });
+
+  it("leaves the per course target out when the target is out of reach", async () => {
+    const r = await call("plan_courses", {
+      current_gpa: 3.1,
+      credits_completed: 60,
+      target_gpa: 3.5,
+      courses: [{ name: "Calculus", credits: 3 }],
+      scale: "us4",
+    });
+    expect(r.structured!.possible).toBe(false);
+    expect(r.structured!.courses).toEqual([{ name: "Calculus", credits: 3 }]);
   });
 
   it("gives every scale with its bands", async () => {

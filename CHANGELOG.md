@@ -2,6 +2,8 @@
 
 ## 0.1.4
 
+- Added a plan_courses tool that takes the upcoming courses, each with its credits, and returns the GPA those credits need plus the lowest letter in each course that keeps the plan on track. target_gpa_planner answers the same question as one GPA for a block of credits, so a question about four classes now has a per course answer. The existing tools, their parameters and every number they return are unchanged.
+
 - calculate_gpa now takes an optional credit_multiplier on each course for a weighted GPA. A course with a multiplier other than 1 counts for more of the weighted GPA, so an AP class that counts 1.1 times the credits can be passed as credit_multiplier 1.1. The term GPA and every number the tool already returned keep their old meaning, and a new weighted_gpa field, a weighted_credits field and per course weighted fields are returned only when a multiplier is used. The tool names and the other parameters are unchanged.
 
 - Every tool now has an output schema and returns the numbers as fields next to the text answer, so a script or a registry listing can read the numbers without taking them out of the sentence. Each tool gives the fields it returns, for example term_gpa for calculate_gpa, needed_percent for needed_on_final and current_grade for weighted_grade. The tool names, the parameters and the words each tool returns are unchanged, and a client that only reads the text still gets the same answer.

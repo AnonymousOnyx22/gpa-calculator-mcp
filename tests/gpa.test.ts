@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
-import { bandForPercent, bandForLetter, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner } from "../src/grades.js";
+import { bandForPercent, bandForLetter, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner, planCourseTargets } from "../src/grades.js";
 
 let client: Client;
 beforeAll(async () => {
@@ -136,12 +136,29 @@ describe("grade math", () => {
     expect(targetGpaPlanner(3.1, 60, 3.4, 15, 4).needed).toBe(4.6);
     expect(targetGpaPlanner(3.1, 60, 3.4, 15, 4).possible).toBe(false);
   });
+  it("plans the lowest letter in each upcoming course", () => {
+    const rows = planCourseTargets([{ name: "Calculus", credits: 3 }, { credits: 3 }], 3.9, "us4");
+    expect(rows.map((r) => r.band?.letter)).toEqual(["A", "A"]);
+    expect(rows[1].name).toBe("Course 2");
+  });
+  it("picks the easier letter when two letters are worth the same points", () => {
+    const rows = planCourseTargets([{ name: "Calculus", credits: 3 }], 4, "ontario-college");
+    expect(rows[0].band?.letter).toBe("A");
+    expect(rows[0].band?.min).toBe(80);
+  });
+  it("leaves the course target empty when the needed GPA is above the scale", () => {
+    const rows = planCourseTargets([{ name: "Calculus", credits: 3 }], 4.6, "us4");
+    expect(rows[0].band).toBeUndefined();
+  });
+  it("rejects upcoming courses with no credits", () => {
+    expect(() => planCourseTargets([{ name: "Calculus", credits: 0 }], 3.5, "us4")).toThrow(/credits/);
+  });
 });
 
 describe("MCP tools", () => {
-  it("lists six read only tools", async () => {
+  it("lists seven read only tools", async () => {
     const tools = (await client.listTools()).tools;
-    expect(tools.map((t) => t.name).sort()).toEqual(["calculate_gpa", "convert_grade", "list_scales", "needed_on_final", "target_gpa_planner", "weighted_grade"]);
+    expect(tools.map((t) => t.name).sort()).toEqual(["calculate_gpa", "convert_grade", "list_scales", "needed_on_final", "plan_courses", "target_gpa_planner", "weighted_grade"]);
     for (const t of tools) expect(t.annotations?.readOnlyHint).toBe(true);
   });
   it("names every parameter and gives an example prompt in each description", async () => {
@@ -286,5 +303,34 @@ describe("MCP tools", () => {
     const r = await call("target_gpa_planner", { current_gpa: 4.0, credits_completed: 30, target_gpa: 4.5, upcoming_credits: 15, scale: "weighted-5.0" });
     expect(r.text).toContain("5.5 on the next 15 credits");
     expect(r.text).toContain("top of this scale is 5.0");
+  });
+  it("gives the grade each upcoming course needs", async () => {
+    const r = await call("plan_courses", {
+      current_gpa: 3.4,
+      credits_completed: 60,
+      target_gpa: 3.5,
+      courses: [
+        { name: "Calculus", credits: 3 },
+        { name: "Physics", credits: 3 },
+        { name: "History", credits: 3 },
+        { name: "Spanish", credits: 3 },
+      ],
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("4.00 GPA over the next 12 credits");
+    expect(r.text).toContain("Calculus: A or better (93% and up, 4.0 points)");
+    expect(r.text).toContain("Spanish: A or better");
+  });
+  it("says when the upcoming courses cannot reach the target", async () => {
+    const r = await call("plan_courses", {
+      current_gpa: 3.1,
+      credits_completed: 60,
+      target_gpa: 3.5,
+      courses: [{ name: "Calculus", credits: 3 }],
+      scale: "us4",
+    });
+    expect(r.text).toContain("would take more than one term");
+    expect(r.text).toContain("no grade on this scale is enough");
   });
 });

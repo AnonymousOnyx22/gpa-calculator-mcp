@@ -285,3 +285,27 @@ export function targetGpaPlanner(currentGpa: number, creditsDone: number, target
   const needed = (targetGpa * (creditsDone + upcomingCredits) - currentGpa * creditsDone) / upcomingCredits;
   return { needed: round(needed), possible: needed <= maxPoints, alreadyThere: needed <= 0 };
 }
+
+export interface PlannedCourse {
+  name?: string;
+  credits: number;
+}
+
+/**
+ * The lowest letter in each course that keeps the average at or above the needed GPA,
+ * when every course meets the same target. Bands are tried from the lowest grade point
+ * up, and bands with the same points are tried from the lowest percentage up, so the
+ * easier letter is picked when a scale gives two letters the same points.
+ */
+export function planCourseTargets(courses: PlannedCourse[], neededGpa: number, scale: string) {
+  const id = assertScale(scale);
+  const bands = [...SCALES[id].bands].sort((a, b) => a.points - b.points || a.min - b.min);
+  const max = Math.max(...bands.map((b) => b.points));
+  return courses.map((c, i) => {
+    if (!(c.credits > 0)) throw new Error(`Course ${c.name ?? i + 1} needs credits greater than 0.`);
+    const name = c.name ?? `Course ${i + 1}`;
+    if (neededGpa > max) return { name, credits: c.credits, band: undefined };
+    const band = bands.find((b) => b.points >= neededGpa - 1e-9) ?? bands[bands.length - 1];
+    return { name, credits: c.credits, band };
+  });
+}

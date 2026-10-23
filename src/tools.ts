@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, gpa, neededOnFinal, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, gpa, neededOnFinal, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -346,6 +346,100 @@ export const tools: ToolDef<Api>[] = [
           max_points: max,
           possible: r.possible,
           already_there: r.alreadyThere,
+        },
+      };
+    },
+  },
+  {
+    name: "plan_courses",
+    title: "Plan grades for upcoming courses",
+    description:
+      "Plan the grade needed in each upcoming course to reach a target cumulative GPA. " +
+      "Inputs: current_gpa (0 to 7), credits_completed (0 or more), target_gpa (0 to 7), courses (each with an optional name and credits greater than 0) and a scale id, which sets the top grade point the scale allows. " +
+      "It works out the GPA the upcoming credits need, then gives the lowest letter in each course that keeps the plan on track, assuming the other courses meet the same target. " +
+      "Says so when the target is already reached or would take more than one term. " +
+      'Example prompt: "I have a 3.4 GPA over 60 credits. What do I need in each of my four classes next semester to reach 3.5?"',
+    inputSchema: {
+      current_gpa: z.number().min(0).max(7).describe("Your cumulative GPA so far, between 0 and 7."),
+      credits_completed: z.number().min(0).describe("Credits already completed, 0 or more."),
+      target_gpa: z.number().min(0).max(7).describe("The cumulative GPA you want to reach, between 0 and 7."),
+      courses: z
+        .array(
+          z.object({
+            name: z.string().optional().describe("Course name."),
+            credits: z.number().gt(0).describe("Credits for the course, must be greater than 0."),
+          }),
+        )
+        .min(1)
+        .describe("The upcoming courses to plan for. Each needs credits greater than 0, and name is optional."),
+      scale,
+    },
+    outputSchema: {
+      scale: z.string().describe("The scale id the plan was made on."),
+      scale_name: z.string().describe("The name of the scale the plan was made on."),
+      current_gpa: z.number().describe("The cumulative GPA so far."),
+      credits_completed: z.number().describe("The credits already completed."),
+      target_gpa: z.number().describe("The cumulative GPA to reach."),
+      upcoming_credits: z.number().describe("The credits of the courses to plan for."),
+      needed_gpa: z.number().describe("The GPA needed on the upcoming credits. It is below 0 when the target is already reached, and above the top of the scale when the target takes more than one term."),
+      max_points: z.number().describe("The top grade point the scale allows."),
+      possible: z.boolean().describe("True when the target can be reached with these courses on this scale."),
+      already_there: z.boolean().describe("True when the target is already reached, so a 0.0 on the upcoming credits keeps it."),
+      courses: z
+        .array(
+          z.object({
+            name: z.string().describe("Name of the course."),
+            credits: z.number().describe("Credits for the course."),
+            target_letter: z.string().optional().describe("The lowest letter in the course that keeps the plan on track, when the target can be reached."),
+            target_min_percent: z.number().optional().describe("The lowest percentage the target letter covers, when the target can be reached."),
+            target_points: z.number().optional().describe("The grade points the target letter is worth, when the target can be reached."),
+          }),
+        )
+        .describe("One entry per upcoming course, in the order they were passed."),
+    },
+    run: async (a) => {
+      const scaleId = assertScale(a.scale);
+      const max = Math.max(...SCALES[scaleId].bands.map((b) => b.points));
+      const upcomingCredits = a.courses.reduce((s: number, c: any) => s + c.credits, 0);
+      const r = targetGpaPlanner(a.current_gpa, a.credits_completed, a.target_gpa, upcomingCredits, max);
+      const rows = planCourseTargets(a.courses, r.needed, scaleId);
+      const lines = rows.map((c) =>
+        c.band
+          ? `${c.name}: ${c.band.letter} or better (${c.band.min}% and up, ${c.band.points.toFixed(1)} points)`
+          : `${c.name}: no grade on this scale is enough`,
+      );
+      let text: string;
+      if (r.alreadyThere) {
+        text = `You are already at or above ${a.target_gpa}. Even a 0.0 over the next ${upcomingCredits} credits keeps you there, so any grade works.\n\n${bullets(lines)}`;
+      } else if (!r.possible) {
+        text = `You would need a ${r.needed.toFixed(2)} GPA over the next ${upcomingCredits} credits, but the top of this scale is ${max.toFixed(1)}. Reaching ${a.target_gpa} would take more than one term.\n\n${bullets(lines)}`;
+      } else {
+        text =
+          `You need a ${r.needed.toFixed(2)} GPA over the next ${upcomingCredits} credits to reach a cumulative ${a.target_gpa} (from ${a.current_gpa} over ${a.credits_completed} credits). ` +
+          `If every course meets or beats its target below, you reach it.\n\n${bullets(lines)}`;
+      }
+      return {
+        text,
+        structured: {
+          scale: scaleId,
+          scale_name: SCALES[scaleId].name,
+          current_gpa: a.current_gpa,
+          credits_completed: a.credits_completed,
+          target_gpa: a.target_gpa,
+          upcoming_credits: upcomingCredits,
+          needed_gpa: r.needed,
+          max_points: max,
+          possible: r.possible,
+          already_there: r.alreadyThere,
+          courses: rows.map((c) => {
+            const row: Record<string, unknown> = { name: c.name, credits: c.credits };
+            if (c.band) {
+              row.target_letter = c.band.letter;
+              row.target_min_percent = c.band.min;
+              row.target_points = c.band.points;
+            }
+            return row;
+          }),
         },
       };
     },
