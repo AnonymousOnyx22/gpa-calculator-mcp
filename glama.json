@@ -55,6 +55,14 @@
         {
           "name": "scale",
           "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
           "required": false,
           "default": "us4",
           "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
@@ -114,6 +122,14 @@
         {
           "name": "scale",
           "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
           "required": false,
           "default": "us4",
           "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
@@ -160,6 +176,14 @@
         {
           "name": "scale",
           "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
           "required": false,
           "default": "us4",
           "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
@@ -267,6 +291,14 @@
         {
           "name": "scale",
           "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
           "required": false,
           "default": "us4",
           "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."
@@ -332,6 +364,14 @@
         {
           "name": "scale",
           "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
           "required": false,
           "default": "us4",
           "description": "Grade scale id: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\". Ask the student which one their school uses if unsure."

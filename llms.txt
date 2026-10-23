@@ -8,7 +8,7 @@
 - All seven tools are read only. They only do arithmetic on the numbers you pass in.
 
 ## Grade conversion tables
-The server has six grade scales that are built in. Pass the scale id to any tool that takes one, and run list_scales to print the same tables.
+The server has six grade scales that are built in. The scale parameter takes one of the six ids below, and any other value is rejected before the tool runs. Run list_scales to print the same tables.
 
 ### us4 (US 4.0 scale)
 - A: 93 to 100, 4.0 grade points
@@ -96,7 +96,7 @@ Parameters:
   - credits (number, required): Credits for the course, must be greater than 0.
   - grade (string or number, required): A letter like "B+" or a percentage like 87 or "87%".
   - credit_multiplier (number, optional): Optional multiplier on the credits for a weighted GPA, greater than 0, like 1.1 for an AP class. Defaults to 1.
-- scale (string, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
+- scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 - prior_gpa (number, optional): GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error.
 - prior_credits (number, optional): Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA. Passing only one of the two is an error.
 
@@ -111,7 +111,7 @@ Convert a letter or percentage into the matching letter, percentage range and gr
 
 Parameters:
 - grade (string or number, required): A letter like "B+" or a percentage like 87 or "87%".
-- scale (string, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
+- scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"convert_grade","arguments":{"grade":78,"scale":"ontario-college"}}`
 
@@ -127,7 +127,7 @@ Parameters:
 - final_weight_percent (number, required): How much the final is worth, greater than 0 and at most 100, as a percentage of the whole course.
 - target_percent (number, optional): The course grade you want to finish with, as a percentage between 0 and 100. Leave it out when you pass target_letter.
 - target_letter (string, optional): The letter grade you want to finish with, like "B+" or "2:1", read from the scale table. Leave it out when you pass target_percent.
-- scale (string, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
+- scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"needed_on_final","arguments":{"current_percent":85,"final_weight_percent":40,"target_letter":"B+","scale":"us4"}}`
 
@@ -158,7 +158,7 @@ Parameters:
 - credits_completed (number, required): Credits already completed, 0 or more.
 - target_gpa (number, required): The cumulative GPA you want to reach, between 0 and 7.
 - upcoming_credits (number, required): Credits you will take next, greater than 0.
-- scale (string, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
+- scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"target_gpa_planner","arguments":{"current_gpa":3.1,"credits_completed":60,"target_gpa":3.4,"upcoming_credits":15,"scale":"us4"}}`
 
@@ -176,7 +176,7 @@ Parameters:
 - courses (array, required): The upcoming courses to plan for. Each needs credits greater than 0, and name is optional.
   - name (string, optional): Course name.
   - credits (number, required): Credits for the course, must be greater than 0.
-- scale (string, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
+- scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"plan_courses","arguments":{"current_gpa":3.4,"credits_completed":60,"target_gpa":3.5,"courses":[{"name":"Calculus","credits":3},{"name":"Physics","credits":3},{"name":"History","credits":3},{"name":"Spanish","credits":3}],"scale":"us4"}}`
 

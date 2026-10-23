@@ -254,10 +254,31 @@ describe("MCP tools", () => {
     expect(r.isError).toBe(true);
     expect(r.text).toContain("Valid letters");
   });
-  it("gives a friendly error for a bad scale", async () => {
+  it("lists the six scale ids as the scale enum on every tool that takes one", async () => {
+    const tools = (await client.listTools()).tools;
+    const withScale = tools.filter((t) => "scale" in ((t.inputSchema as any).properties ?? {}));
+    expect(withScale.map((t) => t.name).sort()).toEqual([
+      "calculate_gpa",
+      "convert_grade",
+      "needed_on_final",
+      "plan_courses",
+      "target_gpa_planner",
+    ]);
+    for (const t of withScale) {
+      expect((t.inputSchema as any).properties.scale.enum, `${t.name}.scale choices`).toEqual([
+        "us4",
+        "us4plus",
+        "ontario-college",
+        "uk-classification",
+        "australia-hd",
+        "weighted-5.0",
+      ]);
+    }
+  });
+  it("rejects a scale that is not one of the six ids", async () => {
     const r = await call("convert_grade", { grade: "A", scale: "ontario" });
     expect(r.isError).toBe(true);
-    expect(r.text).toContain("Valid scale ids");
+    expect(r.text).toContain("Invalid option");
     expect(r.text).toContain("ontario-college");
   });
   it("gives a friendly error for a bad grade format", async () => {

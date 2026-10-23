@@ -4,8 +4,11 @@ import { SCALES, bandFor, gpa, neededOnFinal, planCourseTargets, resolvePrior, r
 
 type Api = null;
 
+// The six scale ids, taken from the tables so the schema and the code cannot drift apart.
+const SCALE_IDS = Object.keys(SCALES) as [ScaleId, ...ScaleId[]];
+
 const scale = z
-  .string()
+  .enum(SCALE_IDS)
   .default("us4")
   .describe(
     'Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". ' +
