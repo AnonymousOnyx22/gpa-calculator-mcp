@@ -223,6 +223,15 @@ Can a script read the numbers without reading the sentence?
 Yes. Every tool has an output schema and returns the numbers as fields next to the text, so a script can read `term_gpa` or `needed_percent` without taking them out of the sentence. The text answer is the same as it has always been.
 
 
+## How it compares
+
+| Option | Needs login or school access | Runs offline | Focus | When to use |
+| --- | --- | --- | --- | --- |
+| GPA Calculator MCP (this server) | No | Yes | Just the numbers. GPA, CGPA, SGPA, weighted grades, targets and conversions. | You have numbers or want to plan and just need the calculation. |
+| LMS MCP servers (like Brightspace, Canvas, Moodle, Google Classroom) | Often yes, connects to a school system | Usually no | Pulls grades, due dates and course data from a learning system. Some include a target grade calculator. | You want to pull data straight from your courses, not type numbers in. |
+
+For a student who just wants the number, a focused offline calculator avoids signing in, avoids connecting to a school server and keeps the task to arithmetic. If you already pull grades from an LMS, you can still pass those numbers to this calculator.
+
 ## Use it with Brightspace or Canvas MCP
 
 If you already pull grades from your learning system, you can combine them with this calculator. Brightspace MCP and Canvas MCP can fetch your grades from your course sites. Then you can ask this server to work out your GPA or figure out what you need on the final.

@@ -7,6 +7,15 @@
 - Works offline, no account. No environment variables, no network calls and no data is stored.
 - All seven tools are read only. They only do arithmetic on the numbers you pass in.
 
+## How it compares
+
+| Option | Needs login or school access | Runs offline | Focus | When to use |
+| --- | --- | --- | --- | --- |
+| GPA Calculator MCP (this server) | No | Yes | Just the numbers. GPA, CGPA, SGPA, weighted grades, targets and conversions. | You have numbers or want to plan and just need the calculation. |
+| LMS MCP servers (like Brightspace, Canvas, Moodle, Google Classroom) | Often yes, connects to a school system | Usually no | Pulls grades, due dates and course data from a learning system. Some include a target grade calculator. | You want to pull data straight from your courses, not type numbers in. |
+
+For a student who just wants the number, a focused offline calculator avoids signing in, avoids connecting to a school server and keeps the task to arithmetic. If you already pull grades from an LMS, you can still pass those numbers to this calculator.
+
 ## Grade conversion tables
 The server has six grade scales that are built in. The scale parameter takes one of the six ids below, and any other value is rejected before the tool runs. Run list_scales to print the same tables.
 
