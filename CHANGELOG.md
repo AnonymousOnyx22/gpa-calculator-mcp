@@ -1,26 +1,6 @@
 # Changelog
 
-## 0.1.3
-
-- Add Brightspace and Canvas MCP usage section to README
-
-## 0.1.2
-
-- Small fixes and clearer docs
-
-## 0.1.1
-
-- Audit llms.txt and glama.json so every tool appears with parameters and 
-- Run npm outdated, bump dependencies and confirm the test suite passes be
-- Not in npm top 40 for "gpa calculator mcp"
-- Add a test asserting package.json, server.json and the registry all read 0.1.0
-- Rename tools and rewrite descriptions with concrete inputs and one example prompt each
-- Rebuild the README first screen as an install block plus three example prompts
-- Rank for 'gpa calculator mcp' by rewriting package.json description and keywords
-- Shorten the server.json description to 100 characters (it is 132)
-- keywords, search-rank, listing
-
-## Unreleased
+## 0.1.4
 
 - Every tool now has an output schema and returns the numbers as fields next to the text answer, so a script or a registry listing can read the numbers without taking them out of the sentence. Each tool gives the fields it returns, for example term_gpa for calculate_gpa, needed_percent for needed_on_final and current_grade for weighted_grade. The tool names, the parameters and the words each tool returns are unchanged, and a client that only reads the text still gets the same answer.
 - Listed the fields each tool returns in llms.txt and glama.json, and added a test that keeps those lists in step with the output schemas in the code.
@@ -46,6 +26,26 @@
 - Listed all six tools with their parameters and one example call in llms.txt, and added the same tool list with parameters, examples and the three grade conversion tables to glama.json. Both files now carry the offline, no account claim word for word. Added a test that keeps the two files in step with the code.
 - Rewrote the npm description and reordered the keywords around the phrase "gpa calculator mcp", and matched the description in server.json, glama.json and llms.txt. Added a test that keeps the phrase in place and keeps the server.json description inside the registry limit. No code changes.
 - Rewrote every tool description to name its concrete inputs and end with one example prompt, and gave every parameter its own description. Tool names and parameters are unchanged. Added tests that check this stays true.
+
+## 0.1.3
+
+- Add Brightspace and Canvas MCP usage section to README
+
+## 0.1.2
+
+- Small fixes and clearer docs
+
+## 0.1.1
+
+- Audit llms.txt and glama.json so every tool appears with parameters and 
+- Run npm outdated, bump dependencies and confirm the test suite passes be
+- Not in npm top 40 for "gpa calculator mcp"
+- Add a test asserting package.json, server.json and the registry all read 0.1.0
+- Rename tools and rewrite descriptions with concrete inputs and one example prompt each
+- Rebuild the README first screen as an install block plus three example prompts
+- Rank for 'gpa calculator mcp' by rewriting package.json description and keywords
+- Shorten the server.json description to 100 characters (it is 132)
+- keywords, search-rank, listing
 
 ## 0.1.0
 
