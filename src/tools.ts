@@ -21,6 +21,9 @@ const gpaCourseFields = z.object({
   letter: z.string().describe("The letter the course counts as on the scale."),
   points: z.number().describe("Grade points the letter is worth on the scale."),
   quality_points: z.number().describe("Grade points times credits, what the course adds to the total."),
+  credit_multiplier: z.number().optional().describe("The credit multiplier of the course, when one other than 1 was passed."),
+  weighted_credits: z.number().optional().describe("Credits times the credit multiplier, when a multiplier other than 1 was passed."),
+  weighted_quality_points: z.number().optional().describe("Grade points times the weighted credits, when a multiplier other than 1 was passed."),
 });
 
 const partFields = z.object({
@@ -41,16 +44,30 @@ export const tools: ToolDef<Api>[] = [
     name: "calculate_gpa",
     title: "Calculate GPA",
     description:
-      "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. " +
+      "Calculate a GPA from a list of courses with credits and grades, optionally weighted with a credit multiplier on each course, and optionally combined with an earlier GPA and credit total. " +
       "The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. " +
-      "Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
+      "Inputs: courses (each with credits greater than 0, a grade that is a letter like \"B+\" or a percentage like 87, and an optional credit_multiplier greater than 0 such as 1.1 for an AP class), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
+      "A credit_multiplier above 1 gives a course more weight in the weighted GPA, and when any course has one other than 1 the tool also returns weighted_gpa and weighted_credits. The term GPA still uses the plain credits. " +
       "Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. " +
       'Example prompt: "What\'s my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"',
     inputSchema: {
       courses: z
-        .array(z.object({ name: z.string().optional(), credits: z.number(), grade }))
+        .array(
+          z.object({
+            name: z.string().optional(),
+            credits: z.number(),
+            grade,
+            credit_multiplier: z
+              .number()
+              .gt(0)
+              .optional()
+              .describe("Optional multiplier on the credits for a weighted GPA, greater than 0, like 1.1 for an AP class. Defaults to 1."),
+          }),
+        )
         .min(1)
-        .describe("The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional."),
+        .describe(
+          "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional, and so is credit_multiplier (greater than 0), which gives a course more weight in the weighted GPA.",
+        ),
       scale,
       prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),
       prior_credits: z.number().min(0).optional().describe("Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA. Passing only one of the two is an error."),
@@ -61,29 +78,58 @@ export const tools: ToolDef<Api>[] = [
       courses: z.array(gpaCourseFields).describe("One entry per course, in the order they were passed."),
       credits: z.number().describe("The credits of the courses in this call."),
       term_gpa: z.number().describe("The GPA for these courses alone."),
+      weighted_gpa: z.number().optional().describe("The GPA with each course's credits multiplied by its credit_multiplier, when at least one multiplier other than 1 was passed. It covers the courses in this call, not the earlier terms."),
+      weighted_credits: z.number().optional().describe("The credits after the credit multipliers are applied, when at least one multiplier other than 1 was passed."),
       cumulative_gpa: z.number().optional().describe("The GPA with the earlier terms folded in, when prior_gpa and prior_credits were both passed."),
       cumulative_credits: z.number().optional().describe("The credits of these courses and the earlier terms together, when prior_gpa and prior_credits were both passed."),
     },
     run: async (a) => {
       const prior = resolvePrior(a.prior_gpa, a.prior_credits);
       const scaleId = assertScale(a.scale);
-      const r = gpa(a.courses, scaleId, prior);
-      const lines = r.rows.map((c) => `${c.name}: ${c.letter}, ${c.points.toFixed(1)} points x ${c.credits} credits`);
+      const r = gpa(
+        a.courses.map((c: any) => ({
+          name: c.name,
+          credits: c.credits,
+          grade: c.grade,
+          creditMultiplier: c.credit_multiplier,
+        })),
+        scaleId,
+        prior,
+      );
+      const lines = r.rows.map((c) => {
+        const base = `${c.name}: ${c.letter}, ${c.points.toFixed(1)} points x ${c.credits} credits`;
+        return c.creditMultiplier === 1 ? base : `${base} x ${c.creditMultiplier} multiplier`;
+      });
       let out = `${bullets(lines)}\n\nGPA for these courses: ${r.term.toFixed(2)} across ${r.credits} credits (${SCALES[scaleId].name}).`;
+      if (r.weightedGpa !== undefined && r.weightedCredits !== undefined) {
+        out += `\nWeighted GPA with the credit multipliers: ${r.weightedGpa.toFixed(2)} across ${r.weightedCredits} weighted credits.`;
+      }
       if (r.cumulative !== undefined) out += `\nCumulative GPA with earlier work: ${r.cumulative.toFixed(2)} across ${r.cumulativeCredits} credits.`;
       const structured: Record<string, unknown> = {
         scale: scaleId,
         scale_name: SCALES[scaleId].name,
-        courses: r.rows.map((c) => ({
-          name: c.name,
-          credits: c.credits,
-          letter: c.letter,
-          points: c.points,
-          quality_points: c.quality,
-        })),
+        courses: r.rows.map((c) => {
+          const row: Record<string, unknown> = {
+            name: c.name,
+            credits: c.credits,
+            letter: c.letter,
+            points: c.points,
+            quality_points: c.quality,
+          };
+          if (c.creditMultiplier !== 1) {
+            row.credit_multiplier = c.creditMultiplier;
+            row.weighted_credits = Math.round(c.credits * c.creditMultiplier * 100) / 100;
+            row.weighted_quality_points = Math.round(c.quality * c.creditMultiplier * 100) / 100;
+          }
+          return row;
+        }),
         credits: r.credits,
         term_gpa: r.term,
       };
+      if (r.weightedGpa !== undefined && r.weightedCredits !== undefined) {
+        structured.weighted_gpa = r.weightedGpa;
+        structured.weighted_credits = r.weightedCredits;
+      }
       if (r.cumulative !== undefined && r.cumulativeCredits !== undefined) {
         structured.cumulative_gpa = r.cumulative;
         structured.cumulative_credits = r.cumulativeCredits;

@@ -144,6 +144,8 @@ export interface CourseInput {
   name?: string;
   credits: number;
   grade: string | number;
+  /** Multiplies the credits of the course for a weighted GPA. Defaults to 1. */
+  creditMultiplier?: number;
 }
 
 /**
@@ -171,19 +173,42 @@ export function gpa(courses: CourseInput[], scale: string, prior?: { gpa: number
   if (courses.length === 0) throw new Error("Add at least one course.");
   const rows = courses.map((c, i) => {
     if (!(c.credits > 0)) throw new Error(`Course ${c.name ?? i + 1} needs credits greater than 0.`);
+    const creditMultiplier = c.creditMultiplier ?? 1;
+    if (!(creditMultiplier > 0)) throw new Error(`Course ${c.name ?? i + 1} needs a credit_multiplier greater than 0.`);
     const band = bandFor(id, c.grade);
-    return { name: c.name ?? `Course ${i + 1}`, credits: c.credits, letter: band.letter, points: band.points, quality: band.points * c.credits };
+    return {
+      name: c.name ?? `Course ${i + 1}`,
+      credits: c.credits,
+      creditMultiplier,
+      letter: band.letter,
+      points: band.points,
+      quality: band.points * c.credits,
+    };
   });
   const credits = rows.reduce((s, r) => s + r.credits, 0);
   const quality = rows.reduce((s, r) => s + r.quality, 0);
   const term = quality / credits;
+  // A credit multiplier changes how much a course counts towards the weighted GPA.
+  // The term GPA keeps the plain credits, so its meaning does not change.
+  const hasMultiplier = rows.some((r) => r.creditMultiplier !== 1);
+  const weightedCredits = hasMultiplier ? rows.reduce((s, r) => s + r.credits * r.creditMultiplier, 0) : undefined;
+  const weightedQuality = hasMultiplier ? rows.reduce((s, r) => s + r.quality * r.creditMultiplier, 0) : undefined;
+  const weightedGpa = hasMultiplier ? round(weightedQuality! / weightedCredits!) : undefined;
   let cumulative: number | undefined;
   let cumulativeCredits: number | undefined;
   if (prior) {
     cumulativeCredits = prior.credits + credits;
     cumulative = (prior.gpa * prior.credits + quality) / cumulativeCredits;
   }
-  return { rows, credits, term: round(term), cumulative: cumulative === undefined ? undefined : round(cumulative), cumulativeCredits };
+  return {
+    rows,
+    credits,
+    term: round(term),
+    weightedGpa,
+    weightedCredits: weightedCredits === undefined ? undefined : round(weightedCredits),
+    cumulative: cumulative === undefined ? undefined : round(cumulative),
+    cumulativeCredits,
+  };
 }
 
 export interface TargetGoal {

@@ -4,7 +4,7 @@
 [![downloads](https://img.shields.io/npm/dm/gpa-calculator-mcp.svg)](https://www.npmjs.com/package/gpa-calculator-mcp)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is the gpa calculator mcp for AI apps. Ask it to work out your GPA, your cumulative GPA (CGPA) or your semester GPA (SGPA), plan the GPA you need to hit a target, convert grades between letters and percentages, and figure out what grade you need on the final. The math is done by tested code, not guessed by the model.
+GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is the gpa calculator mcp for AI apps. Ask it to work out your GPA, your cumulative GPA (CGPA), your semester GPA (SGPA) or your weighted GPA with credit multipliers, plan the GPA you need to hit a target, convert grades between letters and percentages, and figure out what grade you need on the final. The math is done by tested code, not guessed by the model.
 
 Use it with Claude, ChatGPT, Cursor, VS Code Copilot and any other app that supports MCP. It runs on your computer, needs no internet and no login, and never sees your school account.
 
@@ -148,6 +148,7 @@ More things you can ask:
 - "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 - "What's my GPA on the UK classification scale if I got a 2:1, a 2:2 and a first?"
 - "What's my CGPA? I had a 3.2 GPA over 45 credits and this term I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits."
+- "What's my weighted GPA if my two AP classes count 1.1 times the credits?"
 - "Show me the grade scales you have built in."
 
 ## Tools
@@ -156,7 +157,7 @@ Six tools. These names are the ones your AI app sees.
 
 | Tool | Parameters | What it does |
 | --- | --- | --- |
-| `calculate_gpa` | `courses` (name, credits, grade), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally combined with your earlier GPA and credits for a cumulative GPA. Pass `prior_gpa` and `prior_credits` together, or leave both out |
+| `calculate_gpa` | `courses` (name, credits, grade, credit_multiplier), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally weighted with a `credit_multiplier` on each course, and optionally combined with your earlier GPA and credits for a cumulative GPA. Pass `prior_gpa` and `prior_credits` together, or leave both out |
 | `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
 | `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent`, `target_letter`, `scale` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach. Give the target as a percent or as a letter such as `B+` or `2:1`, and the cutoff comes from the scale table |
 | `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come |
@@ -192,6 +193,10 @@ SGPA is the GPA for one term, so the GPA for the courses you pass in. CGPA is th
 Can I include my GPA from last semester?
 
 Yes. Pass your earlier GPA as prior_gpa and your earlier credits as prior_credits to calculate_gpa, along with this term's courses. The tool folds them into a cumulative GPA. Pass both together. Passing only one of the two is an error, so the tool says which one is missing instead of quietly leaving the earlier terms out.
+
+Can I give an AP class more weight?
+
+Yes. Pass `credit_multiplier` on a course in `calculate_gpa`, for example 1.1 for an AP class that counts 1.1 times the credits. The plain `term_gpa` stays the same as it was, and the answer adds a `weighted_gpa` with the multipliers applied plus the weighted credits. Schools differ, so ask which multiplier yours uses. The weighted GPA covers the courses in that call, while the cumulative GPA keeps using the plain credits.
 
 What if my school uses a 4.3 scale?
 

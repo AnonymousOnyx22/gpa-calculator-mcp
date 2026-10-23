@@ -61,6 +61,22 @@ describe("grade math", () => {
     expect(r.term).toBe(3.12); // (12 + 13.2 + 6) / 10
     expect(r.cumulative).toBe(3.03); // (90 + 31.2) / 40
   });
+  it("applies a credit multiplier without changing the term GPA", () => {
+    const r = gpa(
+      [
+        { credits: 3, grade: "A", creditMultiplier: 1.1 },
+        { credits: 4, grade: "B+", creditMultiplier: 1.1 },
+        { credits: 3, grade: "C" },
+      ],
+      "us4",
+    );
+    expect(r.term).toBe(3.12); // the plain credit weighted GPA stays as it was
+    expect(r.weightedCredits).toBe(10.7); // 3 * 1.1 + 4 * 1.1 + 3
+    expect(r.weightedGpa).toBe(3.15); // 33.72 / 10.7
+  });
+  it("rejects a credit multiplier that is not greater than 0", () => {
+    expect(() => gpa([{ credits: 3, grade: "A", creditMultiplier: 0 }], "us4")).toThrow(/credit_multiplier/);
+  });
   it("asks for the other half of the earlier work when only one is given", () => {
     expect(() => resolvePrior(3.0, undefined)).toThrow(/prior_credits/);
     expect(() => resolvePrior(undefined, 30)).toThrow(/prior_gpa/);
@@ -202,6 +218,19 @@ describe("MCP tools", () => {
     expect(r.isError).toBe(false);
     expect(r.text).toContain("GPA for these courses: 4.00");
     expect(r.text).toContain("Cumulative GPA with earlier work: 3.25 across 48 credits");
+  });
+  it("gives a weighted GPA when a course has a credit multiplier", async () => {
+    const r = await call("calculate_gpa", {
+      courses: [
+        { name: "AP Calculus", credits: 3, grade: "A", credit_multiplier: 1.1 },
+        { name: "History", credits: 3, grade: "C" },
+      ],
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("AP Calculus: A, 4.0 points x 3 credits x 1.1 multiplier");
+    expect(r.text).toContain("GPA for these courses: 3.00");
+    expect(r.text).toContain("Weighted GPA with the credit multipliers: 3.05 across 6.3 weighted credits");
   });
   it("gives a friendly error for a bad letter", async () => {
     const r = await call("convert_grade", { grade: "Z", scale: "us4" });

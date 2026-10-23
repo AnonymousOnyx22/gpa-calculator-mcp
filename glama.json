@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "gpa-calculator-mcp",
-  "description": "GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account.",
+  "description": "GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted GPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account.",
   "type": "stdio",
   "license": "MIT",
   "repository": {
@@ -16,13 +16,13 @@
   "tools": [
     {
       "name": "calculate_gpa",
-      "description": "Calculate a GPA from a list of courses with credits and grades, optionally combined with an earlier GPA and credit total. The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. Inputs: courses (each with credits greater than 0 and a grade that is a letter like \"B+\" or a percentage like 87), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. Example prompt: \"What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?\"",
+      "description": "Calculate a GPA from a list of courses with credits and grades, optionally weighted with a credit multiplier on each course, and optionally combined with an earlier GPA and credit total. The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. Inputs: courses (each with credits greater than 0, a grade that is a letter like \"B+\" or a percentage like 87, and an optional credit_multiplier greater than 0 such as 1.1 for an AP class), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. A credit_multiplier above 1 gives a course more weight in the weighted GPA, and when any course has one other than 1 the tool also returns weighted_gpa and weighted_credits. The term GPA still uses the plain credits. Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. Example prompt: \"What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?\"",
       "parameters": [
         {
           "name": "courses",
           "type": "array",
           "required": true,
-          "description": "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional.",
+          "description": "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional, and so is credit_multiplier (greater than 0), which gives a course more weight in the weighted GPA.",
           "items": {
             "type": "object",
             "required": [
@@ -44,6 +44,10 @@
                   "number"
                 ],
                 "description": "A letter like \"B+\" or a percentage like 87 or \"87%\"."
+              },
+              "credit_multiplier": {
+                "type": "number",
+                "description": "Optional multiplier on the credits for a weighted GPA, greater than 0, like 1.1 for an AP class. Defaults to 1."
               }
             }
           }
@@ -91,8 +95,8 @@
           "scale": "us4"
         }
       },
-      "output": "One line per course (\"Calculus: A, 4.0 points x 3 credits\"), then \"GPA for these courses: 3.12 across 10 credits (US 4.0 scale).\" Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing.",
-      "structured_output": "scale, scale_name, courses, credits, term_gpa, cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points."
+      "output": "One line per course (\"Calculus: A, 4.0 points x 3 credits\"), then \"GPA for these courses: 3.12 across 10 credits (US 4.0 scale).\" With a credit multiplier on a course, the line adds the multiplier and the answer adds the weighted GPA and weighted credits. Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing.",
+      "structured_output": "scale, scale_name, courses, credits, term_gpa, weighted_gpa and weighted_credits when a credit multiplier other than 1 is passed, and cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points, plus credit_multiplier, weighted_credits and weighted_quality_points when the course has a multiplier other than 1."
     },
     {
       "name": "convert_grade",

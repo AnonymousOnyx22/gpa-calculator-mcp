@@ -110,6 +110,38 @@ describe("the tools return structured content", () => {
     expect(r.structured).not.toHaveProperty("cumulative_credits");
   });
 
+  it("gives the weighted GPA when a credit multiplier is passed", async () => {
+    const r = await call("calculate_gpa", {
+      courses: [
+        { name: "AP Calculus", credits: 3, grade: "A", credit_multiplier: 1.1 },
+        { name: "History", credits: 3, grade: "C" },
+      ],
+    });
+    expect(r.structured!.term_gpa).toBe(3);
+    expect(r.structured!.weighted_gpa).toBe(3.05);
+    expect(r.structured!.weighted_credits).toBe(6.3);
+    expect(r.structured!.courses).toEqual([
+      {
+        name: "AP Calculus",
+        credits: 3,
+        letter: "A",
+        points: 4,
+        quality_points: 12,
+        credit_multiplier: 1.1,
+        weighted_credits: 3.3,
+        weighted_quality_points: 13.2,
+      },
+      { name: "History", credits: 3, letter: "C", points: 2, quality_points: 6 },
+    ]);
+  });
+
+  it("leaves the weighted fields out when no course has a multiplier", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }] });
+    expect(r.structured).not.toHaveProperty("weighted_gpa");
+    expect(r.structured).not.toHaveProperty("weighted_credits");
+    expect(r.structured!.courses).toEqual([{ name: "Calculus", credits: 3, letter: "A", points: 4, quality_points: 12 }]);
+  });
+
   it("gives the letter, the range and the points of a converted grade", async () => {
     const r = await call("convert_grade", { grade: 78, scale: "ontario-college" });
     expect(r.structured!.letter).toBe("B+");

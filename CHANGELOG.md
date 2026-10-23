@@ -2,6 +2,8 @@
 
 ## 0.1.4
 
+- calculate_gpa now takes an optional credit_multiplier on each course for a weighted GPA. A course with a multiplier other than 1 counts for more of the weighted GPA, so an AP class that counts 1.1 times the credits can be passed as credit_multiplier 1.1. The term GPA and every number the tool already returned keep their old meaning, and a new weighted_gpa field, a weighted_credits field and per course weighted fields are returned only when a multiplier is used. The tool names and the other parameters are unchanged.
+
 - Every tool now has an output schema and returns the numbers as fields next to the text answer, so a script or a registry listing can read the numbers without taking them out of the sentence. Each tool gives the fields it returns, for example term_gpa for calculate_gpa, needed_percent for needed_on_final and current_grade for weighted_grade. The tool names, the parameters and the words each tool returns are unchanged, and a client that only reads the text still gets the same answer.
 - Listed the fields each tool returns in llms.txt and glama.json, and added a test that keeps those lists in step with the output schemas in the code.
 - Added a test file that checks the structured output over a real MCP client. It calls every tool, checks that the fields match the output schema, and checks the numbers for each tool.
