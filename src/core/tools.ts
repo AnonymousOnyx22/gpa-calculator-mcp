@@ -1,6 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { ApiError } from "./http.js";
 
 export type Shape = Record<string, z.ZodTypeAny>;
 
@@ -33,7 +32,8 @@ export async function runTool<Api>(tool: ToolDef<Api>, args: unknown, api: Api):
     const out = await tool.run(args, api);
     return { content: [{ type: "text", text: out.text }], structuredContent: out.structured };
   } catch (err) {
-    const msg = err instanceof ApiError ? err.message : `Something went wrong: ${(err as Error).message}`;
+    // Pass the message through as it was written, so the caller can act on it.
+    const msg = err instanceof Error ? err.message : String(err);
     return { content: [{ type: "text", text: msg }], isError: true };
   }
 }

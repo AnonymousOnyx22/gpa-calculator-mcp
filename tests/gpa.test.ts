@@ -224,6 +224,13 @@ describe("MCP tools", () => {
     expect(r.text).toContain("prior_credits");
     expect(r.text).not.toContain("GPA for these courses");
   });
+  it("returns the error message as it was written, with no prefix", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }], prior_gpa: 3.2 });
+    expect(r.isError).toBe(true);
+    expect(r.text).toBe(
+      "Pass prior_credits as well, or leave both out. Earlier terms are only folded in when prior_gpa and prior_credits come together, so one on its own would be left out.",
+    );
+  });
   it("errors when the earlier credits come without the earlier GPA", async () => {
     const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }], prior_credits: 45 });
     expect(r.isError).toBe(true);
