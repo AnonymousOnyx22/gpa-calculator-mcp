@@ -118,6 +118,21 @@ function schemaFields(schema: unknown, names: string[] = []): string[] {
 const llmsTools = parseLlmsTools(llms);
 const scaleTables = parseScaleTables(llms);
 
+/** The FAQ section of llms.txt, from the heading down to the next heading. */
+function llmsFaq(): string {
+  const start = llms.indexOf("## FAQ");
+  if (start === -1) throw new Error("llms.txt has no FAQ section");
+  const end = llms.indexOf("\n## ", start + "## FAQ".length);
+  return llms.slice(start, end === -1 ? llms.length : end);
+}
+
+/** The text a tool returns for some arguments. */
+async function runTool(name: string, args: Record<string, unknown>): Promise<string> {
+  const tool = tools.find((t) => t.name === name);
+  if (!tool) throw new Error(`there is no tool called ${name}`);
+  return (await tool.run(args, null)).text;
+}
+
 describe("llms.txt and glama.json list every tool", () => {
   it("lists every tool from src/tools.ts in llms.txt, once and in the same order", () => {
     expect(llmsTools.map((t) => t.name)).toEqual(tools.map((t) => t.name));
@@ -243,6 +258,35 @@ describe("the grade conversion tables are the ones in the code", () => {
       expect(llms, `llms.txt mentions ${id}`).toContain(id);
       expect(JSON.stringify(glama), `glama.json mentions ${id}`).toContain(id);
     }
+  });
+});
+
+describe("the FAQ numbers in llms.txt", () => {
+  it("gives the passing range the convert_grade tool reports", async () => {
+    const out = await runTool("convert_grade", { grade: "D", scale: "us4" });
+    const reported = /covers (\d+) to (\d+) percent/.exec(out);
+    expect(reported, "the range the tool reports for D").toBeTruthy();
+    const claim = /D covers (\d+) to (\d+) percent/.exec(llmsFaq());
+    expect(claim, "the range of D in the llms.txt FAQ").toBeTruthy();
+    expect([claim![1], claim![2]], "the range of D in the llms.txt FAQ").toEqual([reported![1], reported![2]]);
+  });
+
+  it("gives the weighted grade the weighted_grade tool reports", async () => {
+    const out = await runTool("weighted_grade", {
+      parts: [
+        { name: "Quizzes", weight: 20, score: 85 },
+        { name: "Labs", weight: 30, score: 70 },
+      ],
+    });
+    const faq = llmsFaq();
+    const gradeSoFar = /Grade so far: (\d+(?:\.\d+)?)%/.exec(out)?.[1];
+    expect(gradeSoFar, "the grade so far the tool reports").toBe("76");
+    expect(/grade so far is (\d+(?:\.\d+)?) percent/.exec(faq)?.[1], "the grade so far in the llms.txt FAQ").toBe(gradeSoFar);
+    const earned = /banks (\d+(?:\.\d+)?) of the 100 points/.exec(out)?.[1];
+    expect(earned, "the points the tool says are banked").toBe("38");
+    expect(/banks (\d+(?:\.\d+)?) of the 100 points/.exec(faq)?.[1], "the points the llms.txt FAQ says are banked").toBe(earned);
+    const finishes = [...out.matchAll(/finish at (\d+(?:\.\d+)?)%/g)].map((match) => match[1]);
+    expect([...faq.matchAll(/finish at (\d+(?:\.\d+)?)/g)].map((match) => match[1]), "the finishes in the llms.txt FAQ").toEqual(finishes);
   });
 });
 

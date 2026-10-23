@@ -4,6 +4,8 @@
 
 - The scale parameter on calculate_gpa, convert_grade, needed_on_final, target_gpa_planner and plan_courses is now an enum of the six scale ids, so the JSON schema lists every valid id and an unknown id is rejected before the tool runs. The ids, the default of us4 and every number returned are unchanged.
 
+- Fixed two FAQ numbers in llms.txt that no longer matched the code. The lowest passing band on the us4 scale is 63 to 66 percent, and the weighted grade example says the grade so far is 76 percent, which banks 38 of the 100 points the course is worth. Added a test that checks the llms.txt FAQ numbers against what the tools return.
+
 ## 0.1.4
 
 - Added a plan_courses tool that takes the upcoming courses, each with its credits, and returns the GPA those credits need plus the lowest letter in each course that keeps the plan on track. target_gpa_planner answers the same question as one GPA for a block of credits, so a question about four classes now has a per course answer. The existing tools, their parameters and every number they return are unchanged.
