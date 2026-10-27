@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Tightened the npm description so the search snippet leads with gpa calculator mcp, works offline with no account, and the main things it does: calculate GPA, CGPA and SGPA, a weighted GPA, weighted grades and final grades, plan a target GPA, work out the grade needed on the final, and convert letter grades. The tools and their outputs are unchanged.
+
 - Shortened the server.json description so it fits the 100 character registry limit and does not truncate. The tools and their outputs are unchanged.
 
 ## 0.1.6
