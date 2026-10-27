@@ -103,7 +103,7 @@ Parameters:
 - courses (array, required): The courses to include. Each needs credits (greater than 0) and a grade (a letter like "B+" or a percentage like 87). name is optional, and so is credit_multiplier (greater than 0), which gives a course more weight in the weighted GPA.
   - name (string, optional): Course name.
   - credits (number, required): Credits for the course, must be greater than 0.
-  - grade (string or number, required): A letter like "B+" or a percentage like 87 or "87%".
+  - grade (string or number): A letter like "B+" or a percentage like 87 or "87%". Every course needs a grade, so leaving it out is an error.
   - credit_multiplier (number, optional): Optional multiplier on the credits for a weighted GPA, greater than 0, like 1.1 for an AP class. Defaults to 1.
 - scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 - prior_gpa (number, optional): GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error.

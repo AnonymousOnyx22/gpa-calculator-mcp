@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- calculate_gpa now returns a clear error when a course is missing a grade or has credits of 0 or less, naming the course and saying what to pass. Errors still pass through exactly as written, with no prefix.
+
 - Added an example prompt line to every tool in llms.txt, so the registry listing shows the question each tool answers next to its example call. The tools, their parameters and every number they return are unchanged.
 
 - Added an example prompt column to the README tool table, so each tool's intended question shows next to its name and parameters. The tools and their outputs are unchanged.

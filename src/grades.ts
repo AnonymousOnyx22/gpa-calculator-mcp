@@ -143,7 +143,7 @@ export function bandFor(scale: string, grade: string | number): Band {
 export interface CourseInput {
   name?: string;
   credits: number;
-  grade: string | number;
+  grade?: string | number;
   /** Multiplies the credits of the course for a weighted GPA. Defaults to 1. */
   creditMultiplier?: number;
 }
@@ -172,9 +172,11 @@ export function gpa(courses: CourseInput[], scale: string, prior?: { gpa: number
   const id = assertScale(scale);
   if (courses.length === 0) throw new Error("Add at least one course.");
   const rows = courses.map((c, i) => {
-    if (!(c.credits > 0)) throw new Error(`Course ${c.name ?? i + 1} needs credits greater than 0.`);
+    const name = c.name ?? `Course ${i + 1}`;
+    if (!(c.credits > 0)) throw new Error(`Course ${name} needs credits greater than 0. Credits must be more than 0, such as 3 credits for a class.`);
+    if (c.grade === undefined) throw new Error(`Course ${name} needs a grade. Pass a letter like "B+" or a percentage like 87.`);
     const creditMultiplier = c.creditMultiplier ?? 1;
-    if (!(creditMultiplier > 0)) throw new Error(`Course ${c.name ?? i + 1} needs a credit_multiplier greater than 0.`);
+    if (!(creditMultiplier > 0)) throw new Error(`Course ${name} needs a credit_multiplier greater than 0.`);
     const band = bandFor(id, c.grade);
     return {
       name: c.name ?? `Course ${i + 1}`,

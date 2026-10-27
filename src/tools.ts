@@ -59,7 +59,7 @@ export const tools: ToolDef<Api>[] = [
           z.object({
             name: z.string().optional(),
             credits: z.number(),
-            grade,
+            grade: grade.optional(),
             credit_multiplier: z
               .number()
               .gt(0)

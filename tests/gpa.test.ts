@@ -77,6 +77,13 @@ describe("grade math", () => {
   it("rejects a credit multiplier that is not greater than 0", () => {
     expect(() => gpa([{ credits: 3, grade: "A", creditMultiplier: 0 }], "us4")).toThrow(/credit_multiplier/);
   });
+  it("asks for credits when a course has none", () => {
+    expect(() => gpa([{ credits: 0, grade: "A" }], "us4")).toThrow(/credits/);
+    expect(() => gpa([{ credits: -1, grade: "A" }], "us4")).toThrow(/credits/);
+  });
+  it("asks for a grade when a course is missing one", () => {
+    expect(() => gpa([{ credits: 3 }], "us4")).toThrow(/grade/);
+  });
   it("asks for the other half of the earlier work when only one is given", () => {
     expect(() => resolvePrior(3.0, undefined)).toThrow(/prior_credits/);
     expect(() => resolvePrior(undefined, 30)).toThrow(/prior_gpa/);
@@ -242,6 +249,18 @@ describe("MCP tools", () => {
     expect(r.isError).toBe(false);
     expect(r.text).toContain("GPA for these courses: 4.00");
     expect(r.text).toContain("Cumulative GPA with earlier work: 3.25 across 48 credits");
+  });
+  it("gives a clear error when a course has no grade", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3 }] });
+    expect(r.isError).toBe(true);
+    expect(r.text).toBe('Course Calculus needs a grade. Pass a letter like "B+" or a percentage like 87.');
+    expect(r.text).not.toContain("GPA for these courses");
+  });
+  it("gives a clear error when a course has no credits", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 0, grade: "A" }] });
+    expect(r.isError).toBe(true);
+    expect(r.text).toBe("Course Calculus needs credits greater than 0. Credits must be more than 0, such as 3 credits for a class.");
+    expect(r.text).not.toContain("GPA for these courses");
   });
   it("gives a weighted GPA when a course has a credit multiplier", async () => {
     const r = await call("calculate_gpa", {

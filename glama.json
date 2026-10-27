@@ -23,11 +23,10 @@
           "type": "array",
           "required": true,
           "description": "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional, and so is credit_multiplier (greater than 0), which gives a course more weight in the weighted GPA.",
-          "items": {
+            "items": {
             "type": "object",
             "required": [
-              "credits",
-              "grade"
+              "credits"
             ],
             "properties": {
               "name": {
