@@ -2,7 +2,7 @@
 
 ## 0.1.6
 
-- Add GitHub repo topics and a star CTA to the README header
+- The README header now shows the project's GitHub star count. Nothing changed in the tools.
 
 ## 0.1.5
 
