@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- Add GitHub repo topics and a star CTA to the README header
+
 ## 0.1.5
 
 - The scale parameter on calculate_gpa, convert_grade, needed_on_final, target_gpa_planner and plan_courses is now an enum of the six scale ids, so the JSON schema lists every valid id and an unknown id is rejected before the tool runs. The ids, the default of us4 and every number returned are unchanged.
