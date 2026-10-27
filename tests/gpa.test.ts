@@ -380,4 +380,39 @@ describe("MCP tools", () => {
     expect(r.text).toContain("would take more than one term");
     expect(r.text).toContain("no grade on this scale is enough");
   });
+  it("calculates GPA from transcript_csv when courses is not given", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nCalculus,4,A\nHistory,3,B+\nChemistry,3,C",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("GPA for these courses: 3.19");
+    expect(r.text).toContain("Calculus: A, 4.0 points x 4 credits");
+    expect(r.text).toContain("History: B+, 3.3 points x 3 credits");
+    expect(r.text).toContain("Chemistry: C, 2.0 points x 3 credits");
+  });
+  it("calculates GPA from transcript_csv with credit multiplier", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade,Multiplier\nAP Calculus,4,A,1.5\nHistory,3,B+\nChemistry,3,C",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("AP Calculus: A, 4.0 points x 4 credits x 1.5 multiplier");
+    expect(r.text).toContain("Weighted GPA with the credit multipliers:");
+  });
+  it("errors when neither courses nor transcript_csv is given", async () => {
+    const r = await call("calculate_gpa", { scale: "us4" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Pass courses or transcript_csv");
+  });
+  it("uses courses when both courses and transcript_csv are given", async () => {
+    const r = await call("calculate_gpa", {
+      courses: [{ name: "Calculus", credits: 3, grade: "A" }],
+      transcript_csv: "Course,Credits,Grade\nHistory,3,B+",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("Calculus: A, 4.0 points x 3 credits");
+    expect(r.text).not.toContain("History");
+  });
 });

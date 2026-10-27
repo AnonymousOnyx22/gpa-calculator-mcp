@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, gpa, neededOnFinal, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, gpa, neededOnFinal, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -52,6 +52,8 @@ export const tools: ToolDef<Api>[] = [
       "Inputs: courses (each with credits greater than 0, a grade that is a letter like \"B+\" or a percentage like 87, and an optional credit_multiplier greater than 0 such as 1.1 for an AP class), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
       "A credit_multiplier above 1 gives a course more weight in the weighted GPA, and when any course has one other than 1 the tool also returns weighted_gpa and weighted_credits. The term GPA still uses the plain credits. " +
       "Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. " +
+      "Alternatively, pass transcript_csv as a CSV string with columns for course name, credits, grade and optional credit multiplier; a header row is optional. " +
+      "When courses is not given, transcript_csv is parsed and used as the course list. " +
       'Example prompt: "What\'s my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"',
     inputSchema: {
       courses: z
@@ -68,8 +70,15 @@ export const tools: ToolDef<Api>[] = [
           }),
         )
         .min(1)
+        .optional()
         .describe(
-          "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional, and so is credit_multiplier (greater than 0), which gives a course more weight in the weighted GPA.",
+          "The courses to include. Each needs credits (greater than 0) and a grade (a letter like \"B+\" or a percentage like 87). name is optional, and so is credit_multiplier (greater than 0), which gives a course more weight in the weighted GPA. Required when transcript_csv is not given.",
+        ),
+      transcript_csv: z
+        .string()
+        .optional()
+        .describe(
+          "A CSV string with columns for course name, credits, grade and optional credit multiplier. A header row is optional. When courses is not given, this is parsed and used as the course list. Example: \"Course,Credits,Grade\\nCalculus,4,A\\nHistory,3,B+\"",
         ),
       scale,
       prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),
@@ -89,8 +98,20 @@ export const tools: ToolDef<Api>[] = [
     run: async (a) => {
       const prior = resolvePrior(a.prior_gpa, a.prior_credits);
       const scaleId = assertScale(a.scale);
+      let courses = a.courses;
+      if (!courses && a.transcript_csv) {
+        courses = parseTranscriptCsv(a.transcript_csv).map((c) => ({
+          name: c.name,
+          credits: c.credits,
+          grade: c.grade,
+          credit_multiplier: c.creditMultiplier,
+        }));
+      }
+      if (!courses || courses.length === 0) {
+        throw new Error("Pass courses or transcript_csv with at least one course.");
+      }
       const r = gpa(
-        a.courses.map((c: any) => ({
+        courses.map((c: any) => ({
           name: c.name,
           credits: c.credits,
           grade: c.grade,
