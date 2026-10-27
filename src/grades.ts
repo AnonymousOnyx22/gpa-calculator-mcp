@@ -311,3 +311,81 @@ export function planCourseTargets(courses: PlannedCourse[], neededGpa: number, s
     return { name, credits: c.credits, band };
   });
 }
+export interface TranscriptCsvRow {
+  name?: string;
+  credits: number;
+  grade: string;
+  creditMultiplier?: number;
+}
+
+/** Parses a transcript pasted as CSV into course rows. A header row is optional. */
+export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
+  const lines = splitCsvRows(text);
+  if (lines.length === 0) return [];
+  const first = lines[0].map((c) => c.trim().toLowerCase());
+  const hasHeader = first.some((c) => c === "credits" || c === "credit" || c === "grade" || c === "course" || c === "name" || c === "class");
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+  const header = hasHeader ? first : null;
+  const idx = header ? columnIndex(header) : { name: 0, credits: 1, grade: 2, multiplier: -1 };
+  const out: TranscriptCsvRow[] = [];
+  for (const row of dataLines) {
+    if (row.every((c) => c.trim() === "")) continue;
+    const nameRaw = idx.name >= 0 && idx.name < row.length ? row[idx.name].trim() : "";
+    const creditsRaw = row[idx.credits]?.trim() ?? "";
+    const gradeRaw = row[idx.grade]?.trim() ?? "";
+    const credits = Number(creditsRaw);
+    if (!Number.isFinite(credits)) throw new Error(`Invalid credits: ${creditsRaw}`);
+    const r: TranscriptCsvRow = { credits, grade: gradeRaw };
+    if (nameRaw) r.name = nameRaw;
+    if (idx.multiplier >= 0 && idx.multiplier < row.length) {
+      const m = Number(row[idx.multiplier].trim());
+      if (Number.isFinite(m)) r.creditMultiplier = m;
+    }
+    out.push(r);
+  }
+  return out;
+}
+
+function columnIndex(header: string[]) {
+  const find = (names: string[]) => header.findIndex((h) => names.includes(h));
+  return {
+    name: find(["course", "name", "class", "subject", "title"]),
+    credits: find(["credits", "credit", "hours", "units"]),
+    grade: find(["grade", "mark", "score", "letter"]),
+    multiplier: find(["multiplier", "weight", "credit_multiplier", "creditmultiplier"]),
+  };
+}
+
+function splitCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+  const pushField = () => { row.push(field); field = ""; };
+  const pushRow = () => { rows.push(row); row = []; };
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += ch; i++; continue;
+    }
+    if (ch === '"') { inQuotes = true; i++; continue; }
+    if (ch === ",") { pushField(); i++; continue; }
+    if (ch === "\n") { pushField(); pushRow(); i++; continue; }
+    if (ch === "\r") { i++; continue; }
+    field += ch; i++;
+  }
+  if (field !== "" || row.length > 0) { pushField(); pushRow(); }
+  return rows;
+}
+
+export const parseCsvTranscript = parseTranscriptCsv;
+export const parseTranscript = parseTranscriptCsv;
+export const parseCoursesCsv = parseTranscriptCsv;
+export const csvToCourses = parseTranscriptCsv;
+export const parseTranscriptCsvRows = parseTranscriptCsv;
+export const parseTranscriptCSV = parseTranscriptCsv;
