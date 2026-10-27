@@ -323,7 +323,8 @@ export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
   const lines = splitCsvRows(text);
   if (lines.length === 0) return [];
   const first = lines[0].map((c) => c.trim().toLowerCase());
-  const hasHeader = first.some((c) => c === "credits" || c === "credit" || c === "grade" || c === "course" || c === "name" || c === "class");
+  // a first row made of known column names is a header, using the same names the columns are matched by below
+  const hasHeader = first.some((c) => ["course", "name", "class", "subject", "title", "credits", "credit", "hours", "units", "grade", "mark", "score", "letter"].includes(c));
   const dataLines = hasHeader ? lines.slice(1) : lines;
   const header = hasHeader ? first : null;
   const idx = header ? columnIndex(header) : { name: 0, credits: 1, grade: 2, multiplier: -1 };
@@ -338,8 +339,10 @@ export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
     const r: TranscriptCsvRow = { credits, grade: gradeRaw };
     if (nameRaw) r.name = nameRaw;
     if (idx.multiplier >= 0 && idx.multiplier < row.length) {
-      const m = Number(row[idx.multiplier].trim());
-      if (Number.isFinite(m)) r.creditMultiplier = m;
+      // an empty cell means no multiplier, not a multiplier of zero
+      const cell = row[idx.multiplier].trim();
+      const m = Number(cell);
+      if (cell !== "" && Number.isFinite(m) && m > 0) r.creditMultiplier = m;
     }
     out.push(r);
   }
@@ -382,10 +385,3 @@ function splitCsvRows(text: string): string[][] {
   if (field !== "" || row.length > 0) { pushField(); pushRow(); }
   return rows;
 }
-
-export const parseCsvTranscript = parseTranscriptCsv;
-export const parseTranscript = parseTranscriptCsv;
-export const parseCoursesCsv = parseTranscriptCsv;
-export const csvToCourses = parseTranscriptCsv;
-export const parseTranscriptCsvRows = parseTranscriptCsv;
-export const parseTranscriptCSV = parseTranscriptCsv;
