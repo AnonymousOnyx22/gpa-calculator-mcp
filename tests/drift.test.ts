@@ -3,10 +3,11 @@ import { readFileSync } from "node:fs";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
+import { tools } from "../src/tools.js";
 
 const llms = readFileSync(new URL("../llms.txt", import.meta.url), "utf8");
 const glama = JSON.parse(readFileSync(new URL("../glama.json", import.meta.url), "utf8")) as {
-  tools: { name: string }[];
+  tools: { name: string; description: string }[];
 };
 
 /** The tool headings under "## Tools" in llms.txt, in file order. */
@@ -51,5 +52,14 @@ describe("every tool the server serves appears in the docs", () => {
 
   it("lists every tool the server serves in glama.json, once and in the same order", () => {
     expect(glama.tools.map((t) => t.name)).toEqual(served);
+  });
+
+  it("keeps every tool description in glama.json in sync with src/tools.ts", () => {
+    expect(glama.tools.length).toBe(tools.length);
+    for (const tool of tools) {
+      const listed = glama.tools.find((t) => t.name === tool.name);
+      expect(listed, `a glama.json entry for ${tool.name}`).toBeTruthy();
+      expect(listed!.description, `glama.json description for ${tool.name}`).toBe(tool.description);
+    }
   });
 });
