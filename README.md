@@ -243,6 +243,24 @@ If you already pull grades from your learning system, you can combine them with 
 Both are free and open source. See the list below for links.
 
 
+## Troubleshooting
+
+### npx issues
+
+If `npx -y gpa-calculator-mcp` fails or hangs:
+
+- Clear the npx cache: `npx clear-npx-cache` or delete the cache folder. On Windows it is usually in `%LocalAppData%\npm-cache\_npx`.
+- Try without cache: `npx --no-cache -y gpa-calculator-mcp`.
+- Check your npm registry: make sure you can reach `registry.npmjs.org`. If you use a proxy or a private registry, point npm to the public registry with `npm config set registry https://registry.npmjs.org/`.
+- If npx asks for permission or tries to install a different package, run the command from a clean terminal with no local node_modules in the path.
+
+### Node 20 issues
+
+- **Old Node.js version**: the server needs Node.js 20 or newer. Check your version with `node --version`. If it is older, update Node.js from [nodejs.org](https://nodejs.org).
+- **npm not found or old**: update npm with `npm install -g npm@latest`. Some Node.js 20 installs ship an older npm that has issues with npx.
+- **PATH issues on Windows**: if `node` or `npx` is not found, reinstall Node.js and make sure "Add to PATH" is checked. Restart your terminal after install.
+- **Permission errors**: on some systems global installs need elevated rights. Using `npx` avoids global installs and is the recommended way to run this server.
+
 ## Node version
 
 There are two floors here, and they are not the same number.
