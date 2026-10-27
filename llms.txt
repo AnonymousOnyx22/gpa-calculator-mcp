@@ -110,6 +110,7 @@ Parameters:
 - prior_credits (number, optional): Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA. Passing only one of the two is an error.
 
 Example call: `{"name":"calculate_gpa","arguments":{"courses":[{"name":"Calculus","credits":3,"grade":"A"},{"name":"Physics","credits":4,"grade":"B+"},{"name":"History","credits":3,"grade":"C"}],"scale":"us4"}}`
+Example prompt: "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"
 
 Output: one line per course ("Calculus: A, 4.0 points x 3 credits"), then "GPA for these courses: 3.12 across 10 credits (US 4.0 scale)." With a credit multiplier on a course, the line adds the multiplier and the answer adds the weighted GPA and weighted credits. Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing.
 
@@ -123,6 +124,7 @@ Parameters:
 - scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"convert_grade","arguments":{"grade":78,"scale":"ontario-college"}}`
+Example prompt: "Convert 78 percent to a letter grade on the Ontario college scale."
 
 Output: "78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points."
 
@@ -139,6 +141,7 @@ Parameters:
 - scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"needed_on_final","arguments":{"current_percent":85,"final_weight_percent":40,"target_letter":"B+","scale":"us4"}}`
+Example prompt: "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"
 
 Output: "You need 90% on the final (worth 40%) to finish with the grade B+, which starts at 87% on the US 4.0 scale. You have 85% on the rest of the course." Give target_percent 80 instead of a letter and the tool says you need 72.5% on the final to finish with 80%.
 
@@ -154,6 +157,7 @@ Parameters:
   - score (number or null, optional): Score between 0 and 100 for marked parts, or leave out for unmarked parts.
 
 Example call: `{"name":"weighted_grade","arguments":{"parts":[{"name":"Quizzes","weight":20,"score":85},{"name":"Labs","weight":30,"score":70},{"name":"Exam","weight":50}]}}`
+Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 
 Output: one line per part ("Quizzes: weight 20%, 85%"), then "Grade so far: 76% on the 50% of the course that is marked. That banks 38 of the 100 points the course is worth.", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.
 
@@ -170,6 +174,7 @@ Parameters:
 - scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"target_gpa_planner","arguments":{"current_gpa":3.1,"credits_completed":60,"target_gpa":3.4,"upcoming_credits":15,"scale":"us4"}}`
+Example prompt: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"
 
 Output: "You would need 4.6 on the next 15 credits, but the top of this scale is 4.0. Reaching 3.4 would take more than one term." Ask for 3.2 instead of 3.4 and the same call needs a 3.60 GPA.
 
@@ -188,6 +193,7 @@ Parameters:
 - scale (string enum, optional, default "us4"): Grade scale id: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4". Ask the student which one their school uses if unsure.
 
 Example call: `{"name":"plan_courses","arguments":{"current_gpa":3.4,"credits_completed":60,"target_gpa":3.5,"courses":[{"name":"Calculus","credits":3},{"name":"Physics","credits":3},{"name":"History","credits":3},{"name":"Spanish","credits":3}],"scale":"us4"}}`
+Example prompt: "I have a 3.4 GPA over 60 credits. What do I need in each of my four classes next semester to reach 3.5?"
 
 Output: "You need a 4.00 GPA over the next 12 credits to reach a cumulative 3.5 (from 3.4 over 60 credits). If every course meets or beats its target below, you reach it." Then one line per course, such as "Calculus: A or better (93% and up, 4.0 points)". When the target is already reached, every course can be any grade that keeps the average at or above it. When the needed GPA is above the top of the scale, each line says that no grade on the scale is enough.
 
@@ -199,6 +205,7 @@ List the built-in grade scales with their letters, percentage ranges and grade p
 Parameters: none.
 
 Example call: `{"name":"list_scales","arguments":{}}`
+Example prompt: "Show me the grade scales you have built in."
 
 Output: the six scales from the tables above, one line per letter with the percentage range and the grade points.
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added an example prompt line to every tool in llms.txt, so the registry listing shows the question each tool answers next to its example call. The tools, their parameters and every number they return are unchanged.
+
 - Added an example prompt column to the README tool table, so each tool's intended question shows next to its name and parameters. The tools and their outputs are unchanged.
 
 - Tightened the npm description so the search snippet leads with gpa calculator mcp, works offline with no account, and the main things it does: calculate GPA, CGPA and SGPA, a weighted GPA, weighted grades and final grades, plan a target GPA, work out the grade needed on the final, and convert letter grades. The tools and their outputs are unchanged.
