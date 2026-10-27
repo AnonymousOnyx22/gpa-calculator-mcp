@@ -11,11 +11,8 @@ Use it with Claude, ChatGPT, Cursor, VS Code Copilot and any other app that supp
 
 Free forever. No account and no subscription.
 
-## Try it in your browser
-
-Try the GPA calculator in your browser at https://brightspacemcp.com/more-mcps/.
-
 ## Install
+
 Run it straight from npm with `npx`. You need Node.js 20 or newer, see [Node version](#node-version) for the details. There is nothing else to install, no account and no config file for the server itself.
 
 ```bash
