@@ -157,15 +157,15 @@ More things you can ask:
 
 Seven tools. These names are the ones your AI app sees.
 
-| Tool | Parameters | What it does |
-| --- | --- | --- |
-| `calculate_gpa` | `courses` (name, credits, grade, credit_multiplier), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally weighted with a `credit_multiplier` on each course, and optionally combined with your earlier GPA and credits for a cumulative GPA. Pass `prior_gpa` and `prior_credits` together, or leave both out |
-| `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points |
-| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent`, `target_letter`, `scale` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach. Give the target as a percent or as a letter such as `B+` or `2:1`, and the cutoff comes from the scale table |
-| `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come |
-| `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | Plan the GPA you need on upcoming credits to reach a target cumulative GPA |
-| `plan_courses` | `current_gpa`, `credits_completed`, `target_gpa`, `courses` (name, credits), `scale` | Plan the GPA your upcoming courses need to reach a target cumulative GPA, and give the lowest letter in each course that keeps the plan on track |
-| `list_scales` | none | List the grade scales built in, with their letter, percentage and points tables |
+| Tool | Parameters | What it does | Example prompt |
+| --- | --- | --- | --- |
+| `calculate_gpa` | `courses` (name, credits, grade, credit_multiplier), `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally weighted with a `credit_multiplier` on each course, and optionally combined with your earlier GPA and credits for a cumulative GPA. Pass `prior_gpa` and `prior_credits` together, or leave both out | "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?" |
+| `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points | "Convert 78 percent to a letter grade on the Ontario college scale." |
+| `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent`, `target_letter`, `scale` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach. Give the target as a percent or as a letter such as `B+` or `2:1`, and the cutoff comes from the scale table | "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?" |
+| `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come | "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?" |
+| `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | Plan the GPA you need on upcoming credits to reach a target cumulative GPA | "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?" |
+| `plan_courses` | `current_gpa`, `credits_completed`, `target_gpa`, `courses` (name, credits), `scale` | Plan the GPA your upcoming courses need to reach a target cumulative GPA, and give the lowest letter in each course that keeps the plan on track | "I have a 3.4 GPA over 60 credits. What do I need in each of my four classes next semester to reach 3.5?" |
+| `list_scales` | none | List the grade scales built in, with their letter, percentage and points tables | "Show me the grade scales you have built in." |
 
 Every tool description sent to your AI app ends with one example prompt, so the model can match a question like "What do I need on the final?" to the right tool and fill in every parameter.
 
