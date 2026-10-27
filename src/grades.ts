@@ -339,10 +339,14 @@ export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
     const r: TranscriptCsvRow = { credits, grade: gradeRaw };
     if (nameRaw) r.name = nameRaw;
     if (idx.multiplier >= 0 && idx.multiplier < row.length) {
-      // an empty cell means no multiplier, not a multiplier of zero
+      // an empty cell means no multiplier, not a multiplier of zero; a filled cell that is not a number above zero is an error,
+      // because ignoring it would count the course as plain credits and quietly change a weighted GPA
       const cell = row[idx.multiplier].trim();
-      const m = Number(cell);
-      if (cell !== "" && Number.isFinite(m) && m > 0) r.creditMultiplier = m;
+      if (cell !== "") {
+        const m = Number(cell);
+        if (!Number.isFinite(m) || m <= 0) throw new Error(`Invalid credit multiplier: ${cell}. Use a number greater than 0, or leave the cell empty.`);
+        r.creditMultiplier = m;
+      }
     }
     out.push(r);
   }

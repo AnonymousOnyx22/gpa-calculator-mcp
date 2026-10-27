@@ -48,10 +48,15 @@ describe("parseTranscriptCsv", () => {
     expect(() => parseTranscriptCsv("course,credits,grade\nMath,three,A")).toThrow(/Invalid credits: three/);
   });
 
-  it("ignores a credit multiplier that is not a positive number", () => {
-    const rows = parseTranscriptCsv("course,credits,grade,multiplier\nMath,3,A,high\nArt,3,B,0\nBio,3,C,-1");
+  it("names a credit multiplier that is not a number above zero instead of quietly ignoring it", () => {
+    expect(() => parseTranscriptCsv("course,credits,grade,multiplier\nMath,3,A,high")).toThrow(/Invalid credit multiplier: high/);
+    expect(() => parseTranscriptCsv("course,credits,grade,multiplier\nArt,3,B,0")).toThrow(/Invalid credit multiplier: 0/);
+    expect(() => parseTranscriptCsv("course,credits,grade,multiplier\nBio,3,C,-1")).toThrow(/Invalid credit multiplier: -1/);
+  });
+
+  it("treats an empty multiplier cell as no multiplier", () => {
+    const rows = parseTranscriptCsv("course,credits,grade,multiplier\nMath,3,A,\nArt,2,B,1.5");
     expect(rows[0].creditMultiplier).toBeUndefined();
-    expect(rows[1].creditMultiplier).toBeUndefined();
-    expect(rows[2].creditMultiplier).toBeUndefined();
+    expect(rows[1].creditMultiplier).toBe(1.5);
   });
 });
