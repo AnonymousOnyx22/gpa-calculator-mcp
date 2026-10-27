@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Shortened the server.json description so it fits the 100 character registry limit and does not truncate. The tools and their outputs are unchanged.
+
 ## 0.1.6
 
 - The README header now shows the project's GitHub star count. Nothing changed in the tools.
