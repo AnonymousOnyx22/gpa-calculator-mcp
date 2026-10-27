@@ -47,4 +47,11 @@ describe("parseTranscriptCsv", () => {
   it("names the bad value when the credits are not a number", () => {
     expect(() => parseTranscriptCsv("course,credits,grade\nMath,three,A")).toThrow(/Invalid credits: three/);
   });
+
+  it("ignores a credit multiplier that is not a positive number", () => {
+    const rows = parseTranscriptCsv("course,credits,grade,multiplier\nMath,3,A,high\nArt,3,B,0\nBio,3,C,-1");
+    expect(rows[0].creditMultiplier).toBeUndefined();
+    expect(rows[1].creditMultiplier).toBeUndefined();
+    expect(rows[2].creditMultiplier).toBeUndefined();
+  });
 });

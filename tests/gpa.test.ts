@@ -415,4 +415,53 @@ describe("MCP tools", () => {
     expect(r.text).toContain("Calculus: A, 4.0 points x 3 credits");
     expect(r.text).not.toContain("History");
   });
+  it("errors on bad credits in transcript_csv", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nMath,three,A",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Invalid credits: three");
+  });
+  it("errors on zero credits in transcript_csv", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nMath,0,A",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("credits greater than 0");
+  });
+  it("errors on negative credits in transcript_csv", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nMath,-3,A",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("credits greater than 0");
+  });
+  it("errors on empty transcript_csv", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Pass courses or transcript_csv with at least one course");
+  });
+  it("errors on transcript_csv with only a header", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\n",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Pass courses or transcript_csv with at least one course");
+  });
+  it("matches the README example for transcript_csv", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nCalculus,4,A\nHistory,3,B+",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("Calculus: A, 4.0 points x 4 credits");
+    expect(r.text).toContain("History: B+, 3.3 points x 3 credits");
+  });
 });
