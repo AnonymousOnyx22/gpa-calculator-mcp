@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- calculate_gpa returns a clear error when transcript_csv has bad credits (not a number, zero, or negative), naming the value and saying what to pass.
-- calculate_gpa returns a clear error when transcript_csv is empty or has only a header, saying to pass at least one course.
+- calculate_gpa takes an optional transcript_csv: a transcript pasted as CSV with a column each for the course name, the credits and the grade, and an optional one for a credit multiplier. A header row is optional and the columns can be in any order. Pass it instead of courses; if you pass both, courses is used.
+- A transcript_csv with credits that are not a number above zero, a credit multiplier that is not a number above zero, or no courses at all gets a clear error that names the value and says what to pass.
 - calculate_gpa now returns a clear error when a course is missing a grade or has credits of 0 or less, naming the course and saying what to pass. Errors still pass through exactly as written, with no prefix.
 
 - Added an example prompt line to every tool in llms.txt, so the registry listing shows the question each tool answers next to its example call. The tools, their parameters and every number they return are unchanged.
