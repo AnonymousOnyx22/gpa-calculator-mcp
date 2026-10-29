@@ -5,13 +5,9 @@
 - calculate_gpa takes an optional transcript_csv: a transcript pasted as CSV with a column each for the course name, the credits and the grade, and an optional one for a credit multiplier. A header row is optional and the columns can be in any order. Pass it instead of courses; if you pass both, courses is used.
 - A transcript_csv with credits that are not a number above zero, a credit multiplier that is not a number above zero, or no courses at all gets a clear error that names the value and says what to pass.
 - calculate_gpa now returns a clear error when a course is missing a grade or has credits of 0 or less, naming the course and saying what to pass. Errors still pass through exactly as written, with no prefix.
-
 - Added an example prompt line to every tool in llms.txt, so the registry listing shows the question each tool answers next to its example call. The tools, their parameters and every number they return are unchanged.
-
 - Added an example prompt column to the README tool table, so each tool's intended question shows next to its name and parameters. The tools and their outputs are unchanged.
-
 - Tightened the npm description so the search snippet leads with gpa calculator mcp, works offline with no account, and the main things it does: calculate GPA, CGPA and SGPA, a weighted GPA, weighted grades and final grades, plan a target GPA, work out the grade needed on the final, and convert letter grades. The tools and their outputs are unchanged.
-
 - Added a CGPA example to the README first screen, next to the finals, term GPA and grade conversion examples, so the cumulative GPA question calculate_gpa answers with prior_gpa is easy to find. The tools and their outputs are unchanged.
 
 ## 0.1.6

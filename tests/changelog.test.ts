@@ -25,19 +25,22 @@ function items(version: string): string[] {
     .map((line) => line.slice(2).trim());
 }
 
-describe("the Unreleased section of CHANGELOG.md", () => {
-  it("is the first section, right after the title", () => {
-    expect(headings()[0], "the first version heading").toBe("Unreleased");
+describe("the top of CHANGELOG.md", () => {
+  // a release renames Unreleased to the new version, so a changelog with no Unreleased section is fine
+  const unreleased = headings().includes("Unreleased");
+
+  it("puts Unreleased first when there is one", () => {
+    if (unreleased) expect(headings()[0], "the first version heading").toBe("Unreleased");
   });
 
-  it("lists at least one change", () => {
-    expect(items("Unreleased").length, "unreleased changes").toBeGreaterThan(0);
+  it("lists at least one change in the newest section", () => {
+    expect(items(headings()[0]).length, "changes in the newest section").toBeGreaterThan(0);
   });
 
   it("has a real change on every bullet line", () => {
-    for (const item of items("Unreleased")) {
-      expect(item, `an unreleased bullet: ${item}`).toMatch(/\S/);
-      expect(item.length, `an unreleased bullet: ${item}`).toBeGreaterThan(10);
+    for (const item of items(headings()[0])) {
+      expect(item, `a bullet: ${item}`).toMatch(/S/);
+      expect(item.length, `a bullet: ${item}`).toBeGreaterThan(10);
     }
   });
 });
