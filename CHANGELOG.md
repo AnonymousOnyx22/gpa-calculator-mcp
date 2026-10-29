@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.7
 
 - calculate_gpa takes an optional transcript_csv: a transcript pasted as CSV with a column each for the course name, the credits and the grade, and an optional one for a credit multiplier. A header row is optional and the columns can be in any order. Pass it instead of courses; if you pass both, courses is used.
 - A transcript_csv with credits that are not a number above zero, a credit multiplier that is not a number above zero, or no courses at all gets a clear error that names the value and says what to pass.

@@ -1,6 +1,6 @@
 {
   "name": "gpa-calculator-mcp",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "gpa calculator mcp server. Works offline, no account. Calculate GPA, CGPA and SGPA, a weighted GPA, weighted grades and final grades. Plan a target GPA, work out the grade you need on the final, and convert letter grades.",
   "type": "module",
   "main": "build/src/index.js",
