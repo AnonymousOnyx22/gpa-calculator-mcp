@@ -290,6 +290,45 @@ describe("the FAQ numbers in llms.txt", () => {
   });
 });
 
+describe("example prompts stay in sync across the docs", () => {
+  const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+
+  function promptOf(description: string): string {
+    const prompt = /Example prompt: "([^"]+)"\s*$/.exec(description)?.[1];
+    if (!prompt) throw new Error("no example prompt at the end of the description");
+    return prompt;
+  }
+
+  for (const tool of tools) {
+    const expected = promptOf(tool.description);
+
+    it(`llms.txt uses the same example prompt for ${tool.name} everywhere`, () => {
+      const start = llms.indexOf(`### ${tool.name}\n`);
+      expect(start, `llms.txt has no section for ${tool.name}`).toBeGreaterThan(-1);
+      const end = llms.indexOf("\n### ", start + 1);
+      const part = llms.slice(start, end === -1 ? undefined : end);
+      const prompts = [...part.matchAll(/Example prompt: "([^"]+)"/g)].map((m) => m[1]);
+      expect(prompts.length).toBeGreaterThan(0);
+      for (const prompt of prompts) expect(prompt).toBe(expected);
+    });
+
+    it(`the README tools table uses the same example prompt for ${tool.name}`, () => {
+      const row = readme.split("\n").find((line) => line.startsWith(`| \`${tool.name}\` |`));
+      expect(row, `README.md has no table row for ${tool.name}`).toBeDefined();
+      expect(row!.trimEnd().endsWith(`| "${expected}" |`)).toBe(true);
+    });
+  }
+
+  it("the README headline prompts are example prompts of a tool", () => {
+    const start = readme.indexOf("## Try these three prompts");
+    const end = readme.indexOf("More things you can ask", start);
+    const quoted = [...readme.slice(start, end).matchAll(/^\s*>\s*"(.*)"$/gm)].map((m) => m[1]);
+    const known = tools.map((t) => promptOf(t.description));
+    expect(quoted.length).toBeGreaterThan(0);
+    for (const prompt of quoted) expect(known, prompt).toContain(prompt);
+  });
+});
+
 describe("the offline and no account claim", () => {
   it("appears word for word in llms.txt and glama.json", () => {
     expect(llms).toContain(CLAIM);
