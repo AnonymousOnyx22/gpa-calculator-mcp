@@ -39,7 +39,7 @@ describe("the top of CHANGELOG.md", () => {
 
   it("has a real change on every bullet line", () => {
     for (const item of items(headings()[0])) {
-      expect(item, `a bullet: ${item}`).toMatch(/S/);
+      expect(item, `a bullet: ${item}`).toMatch(/\S/);
       expect(item.length, `a bullet: ${item}`).toBeGreaterThan(10);
     }
   });
