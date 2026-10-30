@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- calculate_gpa now reads P, NP and W grades in transcript_csv instead of failing the import. Those rows are left out of the GPA and named in a "Not counted in the GPA:" line, except a P on the australia-hd scale, where P is a graded pass and still counts. The existing tools, their parameters and every number they return are unchanged.
 - Added a convert_gpa_scale tool that reads a GPA as a share of the top grade point on its own scale and returns the nearest band on a target scale, so a US 4.0 GPA can be read as a UK class or an Australian grade. With no target scale it covers the UK classification and Australian 7.0 scales. The existing tools, their parameters and every number they return are unchanged.
 
 ## 0.1.7

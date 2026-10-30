@@ -59,4 +59,10 @@ describe("parseTranscriptCsv", () => {
     expect(rows[0].creditMultiplier).toBeUndefined();
     expect(rows[1].creditMultiplier).toBe(1.5);
   });
+
+  it("marks P, NP and W as grades that do not count towards the GPA", () => {
+    const rows = parseTranscriptCsv("course,credits,grade\nWriting,3,P\nLab,1,NP\nArt,3,W\nMath,4,A");
+    expect(rows.map((r) => r.countsTowardGpa)).toEqual([false, false, false, undefined]);
+    expect(rows.map((r) => r.grade)).toEqual(["P", "NP", "W", "A"]);
+  });
 });

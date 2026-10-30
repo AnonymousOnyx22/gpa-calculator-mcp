@@ -493,4 +493,32 @@ describe("MCP tools", () => {
     expect(r.text).toContain("Calculus: A, 4.0 points x 4 credits");
     expect(r.text).toContain("History: B+, 3.3 points x 3 credits");
   });
+  it("leaves P, NP and W rows out of the GPA in transcript_csv and names them", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nCalculus,4,A\nLab,2,NP\nWriting,3,P\nArt,3,W",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("GPA for these courses: 4.00 across 4 credits");
+    expect(r.text).not.toContain("Lab: NP");
+    expect(r.text).toContain("Not counted in the GPA: Lab (NP, 2 credits), Writing (P, 3 credits), Art (W, 3 credits).");
+  });
+  it("counts a P on the australia-hd scale, where P is a graded pass", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nLaw,4,P\nArt,4,C",
+      scale: "australia-hd",
+    });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("Law: P, 4.0 points x 4 credits");
+    expect(r.text).toContain("GPA for these courses: 4.50 across 8 credits");
+    expect(r.text).not.toContain("Not counted in the GPA");
+  });
+  it("errors when transcript_csv has only P, NP or W rows", async () => {
+    const r = await call("calculate_gpa", {
+      transcript_csv: "Course,Credits,Grade\nWriting,3,P\nArt,3,W",
+      scale: "us4",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("This transcript has no graded courses");
+  });
 });

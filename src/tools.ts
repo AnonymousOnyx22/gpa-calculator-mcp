@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, convertGpaScale, gpa, maxPoints, neededOnFinal, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, convertGpaScale, gpa, hasGradePoints, maxPoints, neededOnFinal, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, type TranscriptCsvRow, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -54,6 +54,7 @@ export const tools: ToolDef<Api>[] = [
       "Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. " +
       "Alternatively, pass transcript_csv as a CSV string with columns for course name, credits, grade and optional credit multiplier; a header row is optional. " +
       "When courses is not given, transcript_csv is parsed and used as the course list. " +
+      "In transcript_csv, a P is read as pass, NP as not pass and W as withdrawn. Those rows are left out of the GPA and named in the answer, except where the scale gives the letter points, such as P on australia-hd. " +
       'Example prompt: "What\'s my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"',
     inputSchema: {
       courses: z
@@ -78,7 +79,7 @@ export const tools: ToolDef<Api>[] = [
         .string()
         .optional()
         .describe(
-          "A CSV string with columns for course name, credits, grade and optional credit multiplier. A header row is optional. When courses is not given, this is parsed and used as the course list. Example: \"Course,Credits,Grade\\nCalculus,4,A\\nHistory,3,B+\"",
+          "A CSV string with columns for course name, credits, grade and optional credit multiplier. A header row is optional. P, NP and W grades are left out of the GPA. When courses is not given, this is parsed and used as the course list. Example: \"Course,Credits,Grade\\nCalculus,4,A\\nHistory,3,B+\"",
         ),
       scale,
       prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),
@@ -87,8 +88,8 @@ export const tools: ToolDef<Api>[] = [
     outputSchema: {
       scale: z.string().describe("The scale id the courses were marked on."),
       scale_name: z.string().describe("The name of the scale the courses were marked on."),
-      courses: z.array(gpaCourseFields).describe("One entry per course, in the order they were passed."),
-      credits: z.number().describe("The credits of the courses in this call."),
+      courses: z.array(gpaCourseFields).describe("One entry per graded course, in the order they were passed."),
+      credits: z.number().describe("The credits of the graded courses in this call."),
       term_gpa: z.number().describe("The GPA for these courses alone."),
       weighted_gpa: z.number().optional().describe("The GPA with each course's credits multiplied by its credit_multiplier, when at least one multiplier other than 1 was passed. It covers the courses in this call, not the earlier terms."),
       weighted_credits: z.number().optional().describe("The credits after the credit multipliers are applied, when at least one multiplier other than 1 was passed."),
@@ -99,13 +100,24 @@ export const tools: ToolDef<Api>[] = [
       const prior = resolvePrior(a.prior_gpa, a.prior_credits);
       const scaleId = assertScale(a.scale);
       let courses = a.courses;
+      const notCounted: TranscriptCsvRow[] = [];
       if (!courses && a.transcript_csv) {
-        courses = parseTranscriptCsv(a.transcript_csv).map((c) => ({
+        const parsed = parseTranscriptCsv(a.transcript_csv);
+        const counted = parsed.filter((c) => {
+          // P, NP and W are left out of the GPA unless the scale lists the letter, as australia-hd does for P
+          if (c.countsTowardGpa !== false || hasGradePoints(scaleId, c.grade)) return true;
+          notCounted.push(c);
+          return false;
+        });
+        courses = counted.map((c) => ({
           name: c.name,
           credits: c.credits,
           grade: c.grade,
           credit_multiplier: c.creditMultiplier,
         }));
+      }
+      if (notCounted.length > 0 && (!courses || courses.length === 0)) {
+        throw new Error("This transcript has no graded courses. P, NP and W grades are left out of the GPA, so pass a course with a letter or percentage grade.");
       }
       if (!courses || courses.length === 0) {
         throw new Error("Pass courses or transcript_csv with at least one course.");
@@ -129,6 +141,10 @@ export const tools: ToolDef<Api>[] = [
         out += `\nWeighted GPA with the credit multipliers: ${r.weightedGpa.toFixed(2)} across ${r.weightedCredits} weighted credits.`;
       }
       if (r.cumulative !== undefined) out += `\nCumulative GPA with earlier work: ${r.cumulative.toFixed(2)} across ${r.cumulativeCredits} credits.`;
+      if (notCounted.length > 0) {
+        const skipped = notCounted.map((c) => `${c.name ?? "Course"} (${c.grade}, ${c.credits} credits)`).join(", ");
+        out += `\nNot counted in the GPA: ${skipped}.`;
+      }
       const structured: Record<string, unknown> = {
         scale: scaleId,
         scale_name: SCALES[scaleId].name,

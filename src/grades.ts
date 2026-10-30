@@ -357,6 +357,19 @@ export interface TranscriptCsvRow {
   credits: number;
   grade: string;
   creditMultiplier?: number;
+  /** False for P, NP and W, which most scales do not give grade points, so the row is left out of the GPA. */
+  countsTowardGpa?: boolean;
+}
+
+/** Grades a school records without grade points: pass, not pass and withdrawn. */
+const UNGRADED_GRADES = new Set(["P", "NP", "W"]);
+
+/** Whether the scale gives a grade points, so a P counts where the scale lists it, as australia-hd does. */
+export function hasGradePoints(scale: string, grade: string | number): boolean {
+  const g = parseGrade(grade);
+  if (g.kind === "percent") return true;
+  const id = assertScale(scale);
+  return SCALES[id].bands.some((b) => b.letter.toUpperCase() === g.letter);
 }
 
 /** Parses a transcript pasted as CSV into course rows. A header row is optional. */
@@ -378,6 +391,7 @@ export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
     const credits = Number(creditsRaw);
     if (!Number.isFinite(credits)) throw new Error(`Invalid credits: ${creditsRaw}`);
     const r: TranscriptCsvRow = { credits, grade: gradeRaw };
+    if (UNGRADED_GRADES.has(gradeRaw.toUpperCase())) r.countsTowardGpa = false;
     if (nameRaw) r.name = nameRaw;
     if (idx.multiplier >= 0 && idx.multiplier < row.length) {
       // an empty cell means no multiplier, not a multiplier of zero; a filled cell that is not a number above zero is an error,
