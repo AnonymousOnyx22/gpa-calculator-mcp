@@ -22,6 +22,24 @@ describe("parseTranscriptCsv", () => {
     expect(rows).toEqual([{ name: "Physics", credits: 5, grade: "87" }]);
   });
 
+  it("reads portal export headers like Course Title, Final Grade and Credit Hours in any order", () => {
+    const rows = parseTranscriptCsv("Credit Hours,Course Title,Final Grade\n3.5,Organic Chemistry,B\n4,Calculus II,A-");
+    expect(rows).toEqual([
+      { name: "Organic Chemistry", credits: 3.5, grade: "B" },
+      { name: "Calculus II", credits: 4, grade: "A-" },
+    ]);
+  });
+
+  it("reads header names with extra spaces and a trailing colon", () => {
+    const rows = parseTranscriptCsv("Course Title,Final  Grade:,Credit Hours\nHistory,88,3");
+    expect(rows).toEqual([{ name: "History", credits: 3, grade: "88" }]);
+  });
+
+  it("names the missing column when a header has no credits or grade column", () => {
+    expect(() => parseTranscriptCsv("Course Title,Final Grade\nHistory,B")).toThrow(/no credits column/);
+    expect(() => parseTranscriptCsv("Course Title,Credit Hours\nHistory,3")).toThrow(/no grade column/);
+  });
+
   it("keeps commas and quotes inside quoted fields", () => {
     const rows = parseTranscriptCsv('course,credits,grade\n"Art, Music and ""Design""",3,A-');
     expect(rows[0].name).toBe('Art, Music and "Design"');

@@ -52,7 +52,7 @@ export const tools: ToolDef<Api>[] = [
       "Inputs: courses (each with credits greater than 0, a grade that is a letter like \"B+\" or a percentage like 87, and an optional credit_multiplier greater than 0 such as 1.1 for an AP class), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
       "A credit_multiplier above 1 gives a course more weight in the weighted GPA, and when any course has one other than 1 the tool also returns weighted_gpa and weighted_credits. The term GPA still uses the plain credits. " +
       "Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. " +
-      "Alternatively, pass transcript_csv as a CSV string with columns for course name, credits, grade and optional credit multiplier; a header row is optional. " +
+      "Alternatively, pass transcript_csv as a CSV string with columns for course name, credits, grade and optional credit multiplier; a header row is optional, the columns can be in any order, and header names like Course Title, Final Grade and Credit Hours are read as the name, grade and credits columns. " +
       "When courses is not given, transcript_csv is parsed and used as the course list. " +
       "In transcript_csv, a P is read as pass, NP as not pass and W as withdrawn. Those rows are left out of the GPA and named in the answer, except where the scale gives the letter points, such as P on australia-hd. " +
       'Example prompt: "What\'s my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?"',
@@ -79,7 +79,7 @@ export const tools: ToolDef<Api>[] = [
         .string()
         .optional()
         .describe(
-          "A CSV string with columns for course name, credits, grade and optional credit multiplier. A header row is optional. P, NP and W grades are left out of the GPA. When courses is not given, this is parsed and used as the course list. Example: \"Course,Credits,Grade\\nCalculus,4,A\\nHistory,3,B+\"",
+          "A CSV string with columns for course name, credits, grade and optional credit multiplier. A header row is optional, the columns can be in any order, and header names like Course Title, Final Grade and Credit Hours are read as the name, grade and credits columns. P, NP and W grades are left out of the GPA. When courses is not given, this is parsed and used as the course list. Example: \"Course,Credits,Grade\\nCalculus,4,A\\nHistory,3,B+\"",
         ),
       scale,
       prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),

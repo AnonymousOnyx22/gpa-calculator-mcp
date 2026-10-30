@@ -394,16 +394,40 @@ export function hasGradePoints(scale: string, grade: string | number): boolean {
   return SCALES[id].bands.some((b) => b.letter.toUpperCase() === g.letter);
 }
 
+/** Normalizes a header cell so "Final Grade " and "final grade:" read as one name. */
+function normalizeHeader(cell: string): string {
+  return cell.trim().toLowerCase().replace(/\s+/g, " ").replace(/:$/, "");
+}
+
+const CSV_COLUMNS = {
+  // the names a school records gives a column, from the common ones to the longer ones,
+  // so a portal export titled Course Title, Final Grade and Credit Hours still parses
+  name: ["course", "name", "class", "subject", "title", "course name", "course title", "class name", "course subject"],
+  credits: ["credits", "credit", "hours", "units", "credit hours", "credit hour", "hours worked"],
+  grade: ["grade", "mark", "score", "letter", "final", "final grade", "final mark", "final score", "letter grade", "final letter grade", "course grade"],
+  multiplier: ["multiplier", "weight", "credit multiplier", "credit_multiplier", "creditmultiplier"],
+} as const;
+
 /** Parses a transcript pasted as CSV into course rows. A header row is optional. */
 export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
   const lines = splitCsvRows(text);
   if (lines.length === 0) return [];
-  const first = lines[0].map((c) => c.trim().toLowerCase());
+  const first = lines[0].map(normalizeHeader);
+  const allNames: string[] = Object.values(CSV_COLUMNS).flat();
   // a first row made of known column names is a header, using the same names the columns are matched by below
-  const hasHeader = first.some((c) => ["course", "name", "class", "subject", "title", "credits", "credit", "hours", "units", "grade", "mark", "score", "letter"].includes(c));
+  const hasHeader = first.some((c) => allNames.includes(c));
   const dataLines = hasHeader ? lines.slice(1) : lines;
   const header = hasHeader ? first : null;
   const idx = header ? columnIndex(header) : { name: 0, credits: 1, grade: 2, multiplier: -1 };
+  if (hasHeader) {
+    const missing = (["credits", "grade"] as const).filter((key) => idx[key] < 0);
+    if (missing.length > 0) {
+      throw new Error(
+        `This transcript has no ${missing.join(" or ")} column. The header row is ${first.map((h) => `"${h}"`).join(", ")}. ` +
+          "Name the credits column credits, credit hours, hours or units, and name the grade column grade, final grade, mark, score or letter.",
+      );
+    }
+  }
   const out: TranscriptCsvRow[] = [];
   for (const row of dataLines) {
     if (row.every((c) => c.trim() === "")) continue;
@@ -431,12 +455,12 @@ export function parseTranscriptCsv(text: string): TranscriptCsvRow[] {
 }
 
 function columnIndex(header: string[]) {
-  const find = (names: string[]) => header.findIndex((h) => names.includes(h));
+  const find = (names: readonly string[]) => header.findIndex((h) => names.includes(h));
   return {
-    name: find(["course", "name", "class", "subject", "title"]),
-    credits: find(["credits", "credit", "hours", "units"]),
-    grade: find(["grade", "mark", "score", "letter"]),
-    multiplier: find(["multiplier", "weight", "credit_multiplier", "creditmultiplier"]),
+    name: find(CSV_COLUMNS.name),
+    credits: find(CSV_COLUMNS.credits),
+    grade: find(CSV_COLUMNS.grade),
+    multiplier: find(CSV_COLUMNS.multiplier),
   };
 }
 
