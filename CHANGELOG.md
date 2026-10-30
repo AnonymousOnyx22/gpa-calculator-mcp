@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.8
 
 - calculate_gpa takes an optional drop_lowest, the number of lowest graded courses to leave out of the GPA, for schools that drop the lowest course. The dropped courses come back in a new dropped_courses field and in a "Dropped as the lowest:" line. Without it nothing changes.
 - calculate_gpa now returns excluded_courses, the P, NP and W courses left out of the GPA with their credits and grade, and gpa_credits, the graded credits the GPA is based on. The GPA and every existing field are unchanged.
