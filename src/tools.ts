@@ -91,6 +91,16 @@ export const tools: ToolDef<Api>[] = [
       courses: z.array(gpaCourseFields).describe("One entry per graded course, in the order they were passed."),
       credits: z.number().describe("The credits of the graded courses in this call."),
       term_gpa: z.number().describe("The GPA for these courses alone."),
+      gpa_credits: z.number().describe("The credits that count in the GPA, the same graded credits the term GPA is divided by. Excluded courses add nothing here."),
+      excluded_courses: z
+        .array(
+          z.object({
+            name: z.string().describe("Name of the course left out of the GPA."),
+            credits: z.number().describe("Credits of the course left out."),
+            grade: z.string().describe("The grade that kept the course out of the GPA, such as P, NP or W."),
+          }),
+        )
+        .describe("Courses left out of the GPA because they are not graded, such as P, NP and W rows in transcript_csv. Empty when none were left out."),
       weighted_gpa: z.number().optional().describe("The GPA with each course's credits multiplied by its credit_multiplier, when at least one multiplier other than 1 was passed. It covers the courses in this call, not the earlier terms."),
       weighted_credits: z.number().optional().describe("The credits after the credit multipliers are applied, when at least one multiplier other than 1 was passed."),
       cumulative_gpa: z.number().optional().describe("The GPA with the earlier terms folded in, when prior_gpa and prior_credits were both passed."),
@@ -165,6 +175,8 @@ export const tools: ToolDef<Api>[] = [
         }),
         credits: r.credits,
         term_gpa: r.term,
+        gpa_credits: r.credits,
+        excluded_courses: notCounted.map((c) => ({ name: c.name ?? "Course", credits: c.credits, grade: String(c.grade) })),
       };
       if (r.weightedGpa !== undefined && r.weightedCredits !== undefined) {
         structured.weighted_gpa = r.weightedGpa;

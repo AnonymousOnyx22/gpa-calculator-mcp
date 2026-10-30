@@ -109,7 +109,7 @@
         }
       },
       "output": "One line per course (\"Calculus: A, 4.0 points x 3 credits\"), then \"GPA for these courses: 3.12 across 10 credits (US 4.0 scale).\" With a credit multiplier on a course, the line adds the multiplier and the answer adds the weighted GPA and weighted credits. Pass prior_gpa and prior_credits together to also get the cumulative GPA. Passing only one of the two is an error and says which one is missing. Rows with P, NP or W grades in transcript_csv are left out of the GPA and named in a line that starts \"Not counted in the GPA:\".",
-      "structured_output": "scale, scale_name, courses, credits, term_gpa, weighted_gpa and weighted_credits when a credit multiplier other than 1 is passed, and cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points, plus credit_multiplier, weighted_credits and weighted_quality_points when the course has a multiplier other than 1."
+      "structured_output": "scale, scale_name, courses, credits, term_gpa, gpa_credits, excluded_courses (the P, NP and W courses left out of the GPA, with name, credits and grade), weighted_gpa and weighted_credits when a credit multiplier other than 1 is passed, and cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points, plus credit_multiplier, weighted_credits and weighted_quality_points when the course has a multiplier other than 1."
     },
     {
       "name": "convert_grade",

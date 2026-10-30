@@ -277,3 +277,23 @@ describe("the tools return structured content", () => {
     expect(us4.bands[0]).toEqual({ letter: "A", min_percent: 93, max_percent: 100, points: 4 });
   });
 });
+
+describe("calculate_gpa excluded courses", () => {
+  it("returns excluded_courses and gpa_credits for P and W rows", async () => {
+    const r = await call("calculate_gpa", { transcript_csv: "Course,Credits,Grade\nCalculus,4,A\nYoga,2,P\nArt,3,W", scale: "us4" });
+    expect(r.isError).toBe(false);
+    expect(r.structured!.gpa_credits).toBe(4);
+    expect(r.structured!.term_gpa).toBe(4);
+    expect(r.structured!.excluded_courses).toEqual([
+      { name: "Yoga", credits: 2, grade: "P" },
+      { name: "Art", credits: 3, grade: "W" },
+    ]);
+    outputSchemaOf("calculate_gpa").parse(r.structured);
+  });
+
+  it("returns an empty excluded_courses when every course is graded", async () => {
+    const r = await call("calculate_gpa", { courses: [{ name: "Calculus", credits: 3, grade: "A" }] });
+    expect(r.structured!.excluded_courses).toEqual([]);
+    expect(r.structured!.gpa_credits).toBe(3);
+  });
+});
