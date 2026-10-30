@@ -323,6 +323,28 @@ export function weighted(parts: Part[]) {
   };
 }
 
+export interface RemainingTarget {
+  /** The average the unmarked work needs, or undefined when nothing is left to mark. */
+  needed?: number;
+  possible: boolean;
+  alreadyThere: boolean;
+}
+
+/**
+ * The average score the unmarked work needs to bring the course to a target.
+ * earnedPoints is the points already banked out of the 100 the course is worth, and
+ * remainingWeight is the percentage of the course that is still to come.
+ */
+export function neededOnRemaining(earnedPoints: number, remainingWeight: number, target: number): RemainingTarget {
+  if (target < 0 || target > 100) throw new Error("A target percentage must be between 0 and 100.");
+  if (remainingWeight <= 0) {
+    const reached = earnedPoints >= target;
+    return { possible: reached, alreadyThere: reached };
+  }
+  const needed = ((target - earnedPoints) / remainingWeight) * 100;
+  return { needed: round(needed), possible: needed <= 100, alreadyThere: needed <= 0 };
+}
+
 export function targetGpaPlanner(currentGpa: number, creditsDone: number, targetGpa: number, upcomingCredits: number, maxPoints: number) {
   if (!(upcomingCredits > 0)) throw new Error("Upcoming credits must be greater than 0.");
   const needed = (targetGpa * (creditsDone + upcomingCredits) - currentGpa * creditsDone) / upcomingCredits;

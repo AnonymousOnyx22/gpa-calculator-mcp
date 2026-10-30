@@ -164,20 +164,21 @@ Output: "You need 90% on the final (worth 40%) to finish with the grade B+, whic
 Structured output: scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given.
 
 ### weighted_grade
-Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
+Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). Optional target_percent sets a course grade to work out the average needed on the unmarked parts. A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 
 Parameters:
 - parts (array, required): The weighted parts of the course. Each needs a name and a weight (a percentage of the whole course greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet. Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.
   - name (string, required): Name of the course part.
   - weight (number, required): Weight as a percentage of the whole course, greater than 0.
   - score (number or null, optional): Score between 0 and 100 for marked parts, or leave out for unmarked parts.
+- target_percent (number, optional): Optional target course grade in percent. When given, works out the average needed on the unmarked parts.
 
 Example call: `{"name":"weighted_grade","arguments":{"parts":[{"name":"Quizzes","weight":20,"score":85},{"name":"Labs","weight":30,"score":70},{"name":"Exam","weight":50}]}}`
 Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"
 
 Output: one line per part ("Quizzes: weight 20%, 85%"), then "Grade so far: 76% on the 50% of the course that is marked. That banks 38 of the 100 points the course is worth.", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.
 
-Structured output: parts, total_weight, done_weight, remaining_weight, current_grade, earned_points, worst_finish and best_finish. The parts array holds one entry per part with name, weight and score.
+Structured output: parts, total_weight, done_weight, remaining_weight, current_grade, earned_points, worst_finish, best_finish, needed_percent, possible and already_there. The parts array holds one entry per part with name, weight and score.
 
 ### target_gpa_planner
 Plan the GPA needed on upcoming credits to reach a target cumulative GPA. Inputs: current_gpa (0 to 7), credits_completed (0 or more), target_gpa (0 to 7), upcoming_credits (greater than 0) and a scale id, which sets the top grade point the scale allows. Says so when the target is already reached or would take more than one term. Example prompt: "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?"

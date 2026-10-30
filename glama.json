@@ -258,7 +258,7 @@
     },
     {
       "name": "weighted_grade",
-      "description": "Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: \"My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?\"",
+      "description": "Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). Optional target_percent sets a course grade to work out the average needed on the unmarked parts. A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: \"My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?\"",
       "parameters": [
         {
           "name": "parts",
@@ -289,6 +289,12 @@
               }
             }
           }
+        },
+        {
+          "name": "target_percent",
+          "type": "number",
+          "required": false,
+          "description": "Optional target course grade in percent. When given, works out the average needed on the unmarked parts."
         }
       ],
       "example": {
@@ -313,7 +319,7 @@
         }
       },
       "output": "One line per part (\"Quizzes: weight 20%, 85%\"), then \"Grade so far: 76% on the 50% of the course that is marked. That banks 38 of the 100 points the course is worth.\", then the worst and best possible finish (38% and 88%) and how much of the course is still to come.",
-      "structured_output": "parts, total_weight, done_weight, remaining_weight, current_grade, earned_points, worst_finish and best_finish. The parts array holds one entry per part with name, weight and score."
+      "structured_output": "parts, total_weight, done_weight, remaining_weight, current_grade, earned_points, worst_finish, best_finish, needed_percent, possible and already_there. The parts array holds one entry per part with name, weight and score."
     },
     {
       "name": "target_gpa_planner",

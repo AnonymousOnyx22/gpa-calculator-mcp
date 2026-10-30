@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, convertGpaScale, gpa, hasGradePoints, maxPoints, neededOnFinal, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, type TranscriptCsvRow, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, convertGpaScale, gpa, hasGradePoints, maxPoints, neededOnFinal, neededOnRemaining, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, type TranscriptCsvRow, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -352,7 +352,8 @@ export const tools: ToolDef<Api>[] = [
     title: "Weighted grade",
     description:
       "Combine weighted course parts into the grade so far, plus the worst and best possible finish. " +
-      "Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). " +
+       "Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). " +
+       "Optional target_percent sets a course grade to work out the average needed on the unmarked parts. " +
       "A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. " +
       'Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What\'s my grade so far and what\'s the best I can finish with?"',
     inputSchema: {
@@ -367,9 +368,10 @@ export const tools: ToolDef<Api>[] = [
         .min(1)
         .describe(
           'The weighted parts of the course. Each needs a name and a weight (a percentage of the whole course greater than 0); score is 0 to 100, or leave it out for parts that are not marked yet. ' +
-            "Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.",
-        ),
-    },
+             "Weights are percentages of the whole course, so parts that add up to less than 100 leave the rest of the course still to come.",
+         ),
+       target_percent: z.number().min(0).max(100).optional().describe("Optional target course grade in percent. When given, works out the average needed on the unmarked parts."),
+     },
     outputSchema: {
       parts: z.array(partFields).describe("One entry per part, in the order they were passed."),
       total_weight: z.number().describe("The weights of the parts added together, as a percentage of the whole course."),
@@ -379,29 +381,45 @@ export const tools: ToolDef<Api>[] = [
       earned_points: z.number().describe("The points already banked out of the 100 the whole course is worth."),
       worst_finish: z.number().describe("The course grade if every remaining part scores 0."),
       best_finish: z.number().describe("The course grade if every remaining part scores 100."),
+      needed_percent: z.number().nullable().optional().describe("When a target_percent is given, the average needed on the unmarked parts. Below 0 when already there, above 100 when out of reach."),
+      possible: z.boolean().optional().describe("When a target_percent is given, true when the target can be reached."),
+      already_there: z.boolean().optional().describe("When a target_percent is given, true when the target is already reached."),
     },
     run: async (a) => {
-      const r = weighted(a.parts);
-      const lines = a.parts.map((p: any) => `${p.name}: weight ${p.weight}%, ${p.score == null ? "not marked yet" : `${p.score}%`}`);
-      let now = "Nothing is marked yet.";
-      if (r.currentGrade !== null) {
-        now = `Grade so far: ${r.currentGrade}% on the ${r.doneWeight}% of the course that is marked.`;
-        if (r.doneWeight < 100) now += ` That banks ${r.earnedPoints} of the 100 points the course is worth.`;
-      }
-      const text = `${bullets(lines)}\n\n${now}\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.`;
-      return {
-        text,
-        structured: {
-          parts: a.parts.map((p: any) => ({ name: p.name, weight: p.weight, score: p.score ?? null })),
-          total_weight: r.totalWeight,
-          done_weight: r.doneWeight,
-          remaining_weight: r.remainingWeight,
-          current_grade: r.currentGrade,
-          earned_points: r.earnedPoints,
-          worst_finish: r.worstFinish,
-          best_finish: r.bestFinish,
-        },
-      };
+       const r = weighted(a.parts);
+       let targetText = "";
+       let needed: ReturnType<typeof neededOnRemaining> | null = null;
+       if (a.target_percent != null) {
+         needed = neededOnRemaining(r.earnedPoints, r.remainingWeight, a.target_percent);
+         if (needed.alreadyThere) targetText = ` You already have ${a.target_percent}% locked in.`;
+         else if (!needed.possible) targetText = ` You would need ${needed.needed}% on the rest, which is more than 100%.`;
+         else targetText = ` You need ${needed.needed}% on the rest to finish with ${a.target_percent}%.`;
+       }
+       const lines = a.parts.map((p: any) => `${p.name}: weight ${p.weight}%, ${p.score == null ? "not marked yet" : `${p.score}%`}`);
+       let now = "Nothing is marked yet.";
+       if (r.currentGrade !== null) {
+         now = `Grade so far: ${r.currentGrade}% on the ${r.doneWeight}% of the course that is marked.`;
+         if (r.doneWeight < 100) now += ` That banks ${r.earnedPoints} of the 100 points the course is worth.`;
+       }
+       const text = `${bullets(lines)}\\n\\n${now}\\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.${targetText}`;
+       return {
+         text,
+         structured: {
+           parts: a.parts.map((p: any) => ({ name: p.name, weight: p.weight, score: p.score ?? null })),
+           total_weight: r.totalWeight,
+           done_weight: r.doneWeight,
+           remaining_weight: r.remainingWeight,
+           current_grade: r.currentGrade,
+           earned_points: r.earnedPoints,
+           worst_finish: r.worstFinish,
+           best_finish: r.bestFinish,
+           ...(needed ? {
+             needed_percent: needed.needed ?? null,
+             possible: needed.possible,
+             already_there: needed.alreadyThere,
+           } : {}),
+         },
+       };
     },
   },
   {
