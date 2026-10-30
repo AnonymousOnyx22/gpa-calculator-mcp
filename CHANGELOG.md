@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- calculate_gpa takes an optional drop_lowest, the number of lowest graded courses to leave out of the GPA, for schools that drop the lowest course. The dropped courses come back in a new dropped_courses field and in a "Dropped as the lowest:" line. Without it nothing changes.
 - calculate_gpa now returns excluded_courses, the P, NP and W courses left out of the GPA with their credits and grade, and gpa_credits, the graded credits the GPA is based on. The GPA and every existing field are unchanged.
 - calculate_gpa now reads transcript_csv headers it did not know before, so a portal export with columns like Course Title, Final Grade and Credit Hours in any order parses as it is. A header row with no credits or grade column now gets an error that names the column instead of a parse failure further in.
 - calculate_gpa now reads P, NP and W grades in transcript_csv instead of failing the import. Those rows are left out of the GPA and named in a "Not counted in the GPA:" line, except a P on the australia-hd scale, where P is a graded pass and still counts. The existing tools, their parameters and every number they return are unchanged.

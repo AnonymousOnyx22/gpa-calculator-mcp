@@ -51,6 +51,7 @@ export const tools: ToolDef<Api>[] = [
       "The GPA for the courses you pass is the term GPA, and adding earlier work with prior_gpa and prior_credits gives the cumulative GPA. " +
       "Inputs: courses (each with credits greater than 0, a grade that is a letter like \"B+\" or a percentage like 87, and an optional credit_multiplier greater than 0 such as 1.1 for an AP class), a scale id, and optional prior_gpa and prior_credits to fold in earlier terms. " +
       "A credit_multiplier above 1 gives a course more weight in the weighted GPA, and when any course has one other than 1 the tool also returns weighted_gpa and weighted_credits. The term GPA still uses the plain credits. " +
+      "Pass drop_lowest to leave the lowest graded courses out of the GPA, as schools do that drop the lowest course; the dropped courses are named in dropped_courses. " +
       "Pass prior_gpa and prior_credits together, or leave both out. Passing only one of the two is an error, so the tool says which one is missing. " +
       "Alternatively, pass transcript_csv as a CSV string with columns for course name, credits, grade and optional credit multiplier; a header row is optional, the columns can be in any order, and header names like Course Title, Final Grade and Credit Hours are read as the name, grade and credits columns. " +
       "When courses is not given, transcript_csv is parsed and used as the course list. " +
@@ -84,6 +85,12 @@ export const tools: ToolDef<Api>[] = [
       scale,
       prior_gpa: z.number().min(0).max(7).optional().describe("GPA from earlier terms, 0 to 7. Pass this together with prior_credits to get a cumulative GPA. Passing only one of the two is an error."),
       prior_credits: z.number().min(0).optional().describe("Credits from earlier terms, 0 or more. Pass this together with prior_gpa to get a cumulative GPA. Passing only one of the two is an error."),
+      drop_lowest: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .describe("Number of courses with the lowest grade points to leave out of the GPA, 0 or more, for schools that drop the lowest course. It must be less than the number of graded courses. Ties go to the course listed first. Defaults to 0."),
     },
     outputSchema: {
       scale: z.string().describe("The scale id the courses were marked on."),
@@ -101,6 +108,15 @@ export const tools: ToolDef<Api>[] = [
           }),
         )
         .describe("Courses left out of the GPA because they are not graded, such as P, NP and W rows in transcript_csv. Empty when none were left out."),
+      dropped_courses: z
+        .array(
+          z.object({
+            name: z.string().describe("Name of the course dropped."),
+            credits: z.number().describe("Credits of the course dropped."),
+            grade: z.string().describe("The letter the dropped course counted as on the scale."),
+          }),
+        )
+        .describe("Courses left out because of drop_lowest. Empty when drop_lowest is 0 or not passed."),
       weighted_gpa: z.number().optional().describe("The GPA with each course's credits multiplied by its credit_multiplier, when at least one multiplier other than 1 was passed. It covers the courses in this call, not the earlier terms."),
       weighted_credits: z.number().optional().describe("The credits after the credit multipliers are applied, when at least one multiplier other than 1 was passed."),
       cumulative_gpa: z.number().optional().describe("The GPA with the earlier terms folded in, when prior_gpa and prior_credits were both passed."),
@@ -132,6 +148,20 @@ export const tools: ToolDef<Api>[] = [
       if (!courses || courses.length === 0) {
         throw new Error("Pass courses or transcript_csv with at least one course.");
       }
+      const dropped: { name: string; credits: number; grade: string }[] = [];
+      const dropCount = a.drop_lowest ?? 0;
+      if (dropCount > 0) {
+        if (dropCount >= courses.length) {
+          throw new Error(`drop_lowest is ${dropCount} but only ${courses.length} graded course${courses.length === 1 ? "" : "s"} were passed. Pass a smaller number so at least one course is left.`);
+        }
+        const ranked: { i: number; band: ReturnType<typeof bandFor> }[] = courses.map((c: any, i: number) => ({ i, band: bandFor(scaleId, c.grade) }));
+        ranked.sort((x, y) => x.band.points - y.band.points || x.i - y.i);
+        const dropIdx = new Set(ranked.slice(0, dropCount).map((x) => x.i));
+        courses.forEach((c: any, i: number) => {
+          if (dropIdx.has(i)) dropped.push({ name: c.name ?? `Course ${i + 1}`, credits: c.credits, grade: ranked.find((x) => x.i === i)!.band.letter });
+        });
+        courses = courses.filter((_: any, i: number) => !dropIdx.has(i));
+      }
       const r = gpa(
         courses.map((c: any) => ({
           name: c.name,
@@ -151,6 +181,9 @@ export const tools: ToolDef<Api>[] = [
         out += `\nWeighted GPA with the credit multipliers: ${r.weightedGpa.toFixed(2)} across ${r.weightedCredits} weighted credits.`;
       }
       if (r.cumulative !== undefined) out += `\nCumulative GPA with earlier work: ${r.cumulative.toFixed(2)} across ${r.cumulativeCredits} credits.`;
+      if (dropped.length > 0) {
+        out += `\nDropped as the lowest: ${dropped.map((c) => `${c.name} (${c.grade}, ${c.credits} credits)`).join(", ")}.`;
+      }
       if (notCounted.length > 0) {
         const skipped = notCounted.map((c) => `${c.name ?? "Course"} (${c.grade}, ${c.credits} credits)`).join(", ");
         out += `\nNot counted in the GPA: ${skipped}.`;
@@ -177,6 +210,7 @@ export const tools: ToolDef<Api>[] = [
         term_gpa: r.term,
         gpa_credits: r.credits,
         excluded_courses: notCounted.map((c) => ({ name: c.name ?? "Course", credits: c.credits, grade: String(c.grade) })),
+        dropped_courses: dropped,
       };
       if (r.weightedGpa !== undefined && r.weightedCredits !== undefined) {
         structured.weighted_gpa = r.weightedGpa;

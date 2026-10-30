@@ -297,3 +297,26 @@ describe("calculate_gpa excluded courses", () => {
     expect(r.structured!.gpa_credits).toBe(3);
   });
 });
+
+describe("calculate_gpa drop_lowest", () => {
+  const courses = [
+    { name: "Calculus", credits: 3, grade: "A" },
+    { name: "Art", credits: 3, grade: "C" },
+    { name: "History", credits: 3, grade: "B" },
+  ];
+  it("drops the lowest course and names it", async () => {
+    const r = await call("calculate_gpa", { courses, drop_lowest: 1 });
+    expect(r.isError).toBe(false);
+    expect(r.structured!.term_gpa).toBe(3.5);
+    expect(r.structured!.dropped_courses).toEqual([{ name: "Art", credits: 3, grade: "C" }]);
+    outputSchemaOf("calculate_gpa").parse(r.structured);
+  });
+  it("leaves dropped_courses empty by default", async () => {
+    const r = await call("calculate_gpa", { courses });
+    expect(r.structured!.dropped_courses).toEqual([]);
+  });
+  it("errors when every course would be dropped", async () => {
+    const r = await call("calculate_gpa", { courses, drop_lowest: 3 });
+    expect(r.isError).toBe(true);
+  });
+});
