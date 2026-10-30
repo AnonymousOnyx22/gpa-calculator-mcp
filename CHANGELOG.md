@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added a convert_gpa_scale tool that reads a GPA as a share of the top grade point on its own scale and returns the nearest band on a target scale, so a US 4.0 GPA can be read as a UK class or an Australian grade. With no target scale it covers the UK classification and Australian 7.0 scales. The existing tools, their parameters and every number they return are unchanged.
+
 ## 0.1.7
 
 - calculate_gpa takes an optional transcript_csv: a transcript pasted as CSV with a column each for the course name, the credits and the grade, and an optional one for a credit multiplier. A header row is optional and the columns can be in any order. Pass it instead of courses; if you pass both, courses is used.

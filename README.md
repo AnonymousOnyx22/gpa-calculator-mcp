@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Star on GitHub](https://img.shields.io/github/stars/AnonymousOnyx22/gpa-calculator-mcp.svg)](https://github.com/AnonymousOnyx22/gpa-calculator-mcp)
 
-GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is a GPA calculator for AI apps. Ask it to work out your GPA, your cumulative GPA (CGPA), your semester GPA (SGPA) or your weighted GPA with credit multipliers, plan the GPA you need to hit a target and the grade each upcoming course needs, convert grades between letters and percentages, and figure out what grade you need on the final. The math is done by tested code, not guessed by the model.
+GPA Calculator MCP is a free, open source [MCP](https://modelcontextprotocol.io) server, published on npm as `gpa-calculator-mcp`. It is a GPA calculator for AI apps. Ask it to work out your GPA, your cumulative GPA (CGPA), your semester GPA (SGPA) or your weighted GPA with credit multipliers, plan the GPA you need to hit a target and the grade each upcoming course needs, convert grades between letters and percentages, do a GPA scale conversion for a UK class or an Australian grade, and figure out what grade you need on the final. The math is done by tested code, not guessed by the model.
 
 Use it with Claude, ChatGPT, Cursor, VS Code Copilot and any other app that supports MCP. It runs on your computer, needs no internet and no login, and never sees your school account.
 
@@ -151,16 +151,18 @@ More things you can ask:
 - "What's my GPA on the UK classification scale if I got a 2:1, a 2:2 and a first?"
 - "What's my CGPA? I had a 3.2 GPA over 45 credits and this term I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits."
 - "What's my weighted GPA if my two AP classes count 1.1 times the credits?"
+- "I have a 3.5 GPA on the US 4.0 scale. What is that in the UK?"
 - "Show me the grade scales you have built in."
 
 ## Tools
 
-Seven tools. These names are the ones your AI app sees.
+Eight tools. These names are the ones your AI app sees.
 
 | Tool | Parameters | What it does | Example prompt |
 | --- | --- | --- | --- |
 | `calculate_gpa` | `courses` (name, credits, grade, credit_multiplier), `transcript_csv`, `scale`, `prior_gpa`, `prior_credits` | Calculate a GPA for a list of courses with credits and grades, optionally weighted with a `credit_multiplier` on each course, and optionally combined with your earlier GPA and credits for a cumulative GPA. Pass `prior_gpa` and `prior_credits` together, or leave both out. Alternatively, pass `transcript_csv` as a CSV string with columns for course name, credits, grade and optional credit multiplier; a header row is optional. When `courses` is not given, `transcript_csv` is parsed and used as the course list | "What's my GPA if I got an A in 3 credits, a B+ in 4 credits and a C in 3 credits?" |
 | `convert_grade` | `grade`, `scale` | Convert a letter or percentage to the matching letter, percentage range and grade points | "Convert 78 percent to a letter grade on the Ontario college scale." |
+| `convert_gpa_scale` | `gpa`, `from_scale`, `to_scale` | Convert a GPA on one scale to the nearest band on another, such as a US 4.0 GPA to a UK class or an Australian grade. Leave `to_scale` out to get both | "I have a 3.5 GPA on the US 4.0 scale. What is that in the UK?" |
 | `needed_on_final` | `current_percent`, `final_weight_percent`, `target_percent`, `target_letter`, `scale` | Calculate the score you need on the final to hit a target, and say when it is already locked in or out of reach. Give the target as a percent or as a letter such as `B+` or `2:1`, and the cutoff comes from the scale table | "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?" |
 | `weighted_grade` | `parts` (name, weight, score) | Combine weighted parts into your grade so far and your worst and best possible finish; leave `score` out for unmarked work. Every weight is a percentage of the whole course, so parts you do not list still count as work to come | "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?" |
 | `target_gpa_planner` | `current_gpa`, `credits_completed`, `target_gpa`, `upcoming_credits`, `scale` | Plan the GPA you need on upcoming credits to reach a target cumulative GPA | "I have a 3.1 GPA over 60 credits. What GPA do I need next semester to reach 3.4?" |
@@ -182,11 +184,13 @@ Every tool also returns the same numbers as structured data. Each tool has an ou
 | `australia-hd` | Australian 7.0 scale, HD is 7, D is 6, C is 5 and P is 4. Check your own school's table |
 | `weighted-5.0` | US weighted 5.0 scale, the `us4` cutoffs with every letter above F one point higher, so A is 5.0. Check your own school's table |
 
-The `scale` parameter takes one of these six ids. A client that reads the tool schema sees them as the allowed values, and any other value is rejected before the tool runs.
+The scale parameters take one of these six ids. A client that reads the tool schema sees them as the allowed values, and any other value is rejected before the tool runs.
 
 Schools differ. Run `list_scales` to see the exact table used, and tell your AI if your school's cutoffs are different.
 
 The two UK and Australian scales turn a class or a letter into grade points so the GPA tools can add up your work. For the UK table, a first is 4.0, a 2:1 is 3.3, a 2:2 is 2.7 and a third is 2.0. A UK degree is normally reported as a class, not a GPA, so treat those points as a way to compare and plan, not as an official number. Pass a class in a letter field as `1st`, `2:1`, `2:2` or `3rd`, or pass a percentage and the server picks the class for you. The `weighted-5.0` table is a plain mapping rather than one school's official table: it keeps the `us4` cutoffs and puts every letter above F one point higher, so an A is 5.0. Pick it when your school reports a weighted GPA on a 5.0 top.
+
+Run `convert_gpa_scale` to read a GPA on one scale as the nearest band on another, so a US 4.0 GPA can be read as a UK class or an Australian grade. It reads the GPA as a share of the top grade point on its own scale and picks the nearest band on the target scale. That is a comparison, not an official conversion, so check the target school's table.
 
 
 ## FAQ
@@ -214,6 +218,10 @@ It depends on your school and program. On the built in us4 scale, D covers 63 to
 Can I ask for a letter grade instead of a percentage?
 
 Yes. Pass `target_letter` to `needed_on_final`, for example `target_letter` "B+", and the tool looks the cutoff up in the scale table. Pass `scale` "uk-classification" for a UK class such as 2:1. You can pass `target_percent` as well, and the tool works to the higher of the two.
+
+How do I convert my GPA to a UK or Australian scale?
+
+Use `convert_gpa_scale`. Pass your GPA as `gpa` and the scale it is on as `from_scale`. Leave `to_scale` out and the tool gives the nearest band on both the `uk-classification` and `australia-hd` scales, or pass one of them to get only that one. It reads your GPA as a share of the top grade point on its own scale and picks the nearest band on the target scale. That is a comparison, not an official conversion, so check the target school's table.
 
 Do my course parts have to add up to 100?
 

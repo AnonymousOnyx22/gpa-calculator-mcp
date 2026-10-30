@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "gpa-calculator-mcp",
-  "description": "GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted GPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account.",
+  "description": "GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted GPA, weighted grades, a target GPA, grades on the final, letter grade conversion and converting a GPA between scales. Works offline, no account.",
   "type": "stdio",
   "license": "MIT",
   "repository": {
@@ -149,6 +149,56 @@
       },
       "output": "\"78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points.\"",
       "structured_output": "scale, scale_name, letter, min_percent, max_percent and points."
+    },
+    {
+      "name": "convert_gpa_scale",
+      "description": "Convert a GPA on one grade scale to the nearest band on another, so a GPA from one country can be read as a UK class or an Australian grade. Inputs: gpa (the GPA to convert, 0 to 7 and at or below the top of from_scale), from_scale (the scale the GPA is on, default us4) and optional to_scale (the scale to convert to; leave it out to convert to both the uk-classification and australia-hd scales). The GPA is read as a share of the top grade point on its own scale, then the nearest band on the target scale is returned with its percentage range and grade points. This is a common comparison, not an official conversion, so check the target school's table. Example prompt: \"I have a 3.5 GPA on the US 4.0 scale. What is that in the UK?\"",
+      "parameters": [
+        {
+          "name": "gpa",
+          "type": "number",
+          "required": true,
+          "description": "The GPA to convert, between 0 and 7. It must be at or below the top grade point of from_scale."
+        },
+        {
+          "name": "from_scale",
+          "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
+          "required": false,
+          "default": "us4",
+          "description": "Grade scale id the GPA is on: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Defaults to \"us4\"."
+        },
+        {
+          "name": "to_scale",
+          "type": "string",
+          "enum": [
+            "us4",
+            "us4plus",
+            "ontario-college",
+            "uk-classification",
+            "australia-hd",
+            "weighted-5.0"
+          ],
+          "required": false,
+          "description": "Grade scale id to convert to: \"us4\", \"us4plus\", \"ontario-college\", \"uk-classification\", \"australia-hd\" or \"weighted-5.0\". Leave it out to convert to both the uk-classification and australia-hd scales."
+        }
+      ],
+      "example": {
+        "name": "convert_gpa_scale",
+        "arguments": {
+          "gpa": 3.5,
+          "from_scale": "us4"
+        }
+      },
+      "output": "One line for each target scale with the band, its percentage range and its grade points, then a note that this is a common comparison and not an official conversion. With no to_scale, the answer covers the uk-classification and australia-hd scales.",
+      "structured_output": "gpa, from_scale, from_scale_name, from_max_points and conversions. The conversions array holds one entry per target scale with scale, scale_name, letter, min_percent, max_percent and points."
     },
     {
       "name": "needed_on_final",

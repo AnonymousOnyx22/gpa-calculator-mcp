@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, gpa, neededOnFinal, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, convertGpaScale, gpa, maxPoints, neededOnFinal, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -192,6 +192,72 @@ export const tools: ToolDef<Api>[] = [
           min_percent: b.min,
           max_percent: b.max,
           points: b.points,
+        },
+      };
+    },
+  },
+  {
+    name: "convert_gpa_scale",
+    title: "Convert a GPA to another scale",
+    description:
+      "Convert a GPA on one grade scale to the nearest band on another, so a GPA from one country can be read as a UK class or an Australian grade. " +
+      "Inputs: gpa (the GPA to convert, 0 to 7 and at or below the top of from_scale), from_scale (the scale the GPA is on, default us4) and optional to_scale (the scale to convert to; leave it out to convert to both the uk-classification and australia-hd scales). " +
+      "The GPA is read as a share of the top grade point on its own scale, then the nearest band on the target scale is returned with its percentage range and grade points. " +
+      "This is a common comparison, not an official conversion, so check the target school's table. " +
+      'Example prompt: "I have a 3.5 GPA on the US 4.0 scale. What is that in the UK?"',
+    inputSchema: {
+      gpa: z.number().min(0).max(7).describe("The GPA to convert, between 0 and 7. It must be at or below the top grade point of from_scale."),
+      from_scale: z
+        .enum(SCALE_IDS)
+        .default("us4")
+        .describe('Grade scale id the GPA is on: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4".'),
+      to_scale: z
+        .enum(SCALE_IDS)
+        .optional()
+        .describe('Grade scale id to convert to: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Leave it out to convert to both the uk-classification and australia-hd scales.'),
+    },
+    outputSchema: {
+      gpa: z.number().describe("The GPA that was converted."),
+      from_scale: z.string().describe("The scale id the GPA was on."),
+      from_scale_name: z.string().describe("The name of the scale the GPA was on."),
+      from_max_points: z.number().describe("The top grade point of the scale the GPA was on."),
+      conversions: z
+        .array(
+          z.object({
+            scale: z.string().describe("The scale id the GPA was converted to."),
+            scale_name: z.string().describe("The name of the scale the GPA was converted to."),
+            letter: z.string().describe("The nearest band on the target scale."),
+            min_percent: z.number().describe("The lowest percentage the band covers on the target scale."),
+            max_percent: z.number().describe("The highest percentage the band covers on the target scale."),
+            points: z.number().describe("The grade points the band is worth on the target scale."),
+          }),
+        )
+        .describe("One entry per target scale, in the order they were converted."),
+    },
+    run: async (a) => {
+      const fromId = assertScale(a.from_scale);
+      const targets: ScaleId[] = a.to_scale ? [assertScale(a.to_scale)] : ["uk-classification", "australia-hd"];
+      const converted = convertGpaScale(a.gpa, fromId, targets);
+      const lines = converted.map(
+        ({ scale, band }) =>
+          `${band.letter} on the ${SCALES[scale].name}, covering ${band.min} to ${band.max} percent and worth ${band.points.toFixed(1)} grade points`,
+      );
+      const text = `A ${a.gpa} GPA on the ${SCALES[fromId].name} is:\n\n${bullets(lines)}\n\nThis is a common comparison, not an official conversion, so check the target school's table.`;
+      return {
+        text,
+        structured: {
+          gpa: a.gpa,
+          from_scale: fromId,
+          from_scale_name: SCALES[fromId].name,
+          from_max_points: maxPoints(fromId),
+          conversions: converted.map(({ scale, band }) => ({
+            scale,
+            scale_name: SCALES[scale].name,
+            letter: band.letter,
+            min_percent: band.min,
+            max_percent: band.max,
+            points: band.points,
+          })),
         },
       };
     },

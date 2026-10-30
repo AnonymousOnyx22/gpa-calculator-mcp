@@ -140,6 +140,47 @@ export function bandFor(scale: string, grade: string | number): Band {
   return g.kind === "percent" ? bandForPercent(scale, g.percent) : bandForLetter(scale, g.letter);
 }
 
+/** The top grade point a scale allows. */
+export function maxPoints(scale: string): number {
+  const id = assertScale(scale);
+  return Math.max(...SCALES[id].bands.map((b) => b.points));
+}
+
+export interface GpaConversion {
+  scale: ScaleId;
+  band: Band;
+}
+
+/**
+ * Reads a GPA as a share of the top grade point on its own scale, then finds the
+ * nearest band on each target scale. The scales do not share a percentage table,
+ * so this is a comparison rather than an official conversion. A tie goes to the
+ * lower band, which is the easier grade.
+ */
+export function convertGpaScale(gpa: number, fromScale: string, toScales: string[]): GpaConversion[] {
+  const fromId = assertScale(fromScale);
+  const top = maxPoints(fromId);
+  if (gpa < 0 || gpa > top) {
+    throw new Error(`A GPA on the ${fromId} scale must be between 0 and ${top}, got ${gpa}.`);
+  }
+  const share = gpa / top;
+  return toScales.map((toScale) => {
+    const id = assertScale(toScale);
+    const target = share * maxPoints(id);
+    const bands = [...SCALES[id].bands].sort((a, b) => a.points - b.points || a.min - b.min);
+    let band = bands[0];
+    let best = Math.abs(band.points - target);
+    for (const candidate of bands.slice(1)) {
+      const distance = Math.abs(candidate.points - target);
+      if (distance < best) {
+        band = candidate;
+        best = distance;
+      }
+    }
+    return { scale: id, band };
+  });
+}
+
 export interface CourseInput {
   name?: string;
   credits: number;

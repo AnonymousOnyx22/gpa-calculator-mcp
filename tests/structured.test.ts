@@ -60,6 +60,7 @@ describe("the tools return structured content", () => {
     const calls: Record<string, Record<string, unknown>> = {
       calculate_gpa: { courses: [{ name: "Calculus", credits: 3, grade: "A" }] },
       convert_grade: { grade: 78, scale: "ontario-college" },
+      convert_gpa_scale: { gpa: 3.5, from_scale: "us4" },
       needed_on_final: { current_percent: 85, final_weight_percent: 40, target_letter: "B+" },
       weighted_grade: { parts: [{ name: "Quizzes", weight: 20, score: 85 }] },
       target_gpa_planner: { current_gpa: 3.1, credits_completed: 60, target_gpa: 3.4, upcoming_credits: 15 },
@@ -154,6 +155,29 @@ describe("the tools return structured content", () => {
     expect(r.structured!.min_percent).toBe(75);
     expect(r.structured!.max_percent).toBe(79);
     expect(r.structured!.points).toBe(3.5);
+  });
+
+  it("gives the nearest band on the target scales", async () => {
+    const r = await call("convert_gpa_scale", { gpa: 3.5, from_scale: "us4" });
+    expect(r.structured!.from_scale).toBe("us4");
+    expect(r.structured!.from_scale_name).toBe("US 4.0 scale");
+    expect(r.structured!.from_max_points).toBe(4);
+    const conversions = r.structured!.conversions as { scale: string; letter: string; min_percent: number; max_percent: number; points: number }[];
+    expect(conversions.map((c) => c.scale)).toEqual(["uk-classification", "australia-hd"]);
+    expect(conversions[0].letter).toBe("2:1");
+    expect(conversions[0].min_percent).toBe(60);
+    expect(conversions[0].max_percent).toBe(69);
+    expect(conversions[0].points).toBe(3.3);
+    expect(conversions[1].letter).toBe("D");
+  });
+
+  it("converts to one target scale when one is passed", async () => {
+    const r = await call("convert_gpa_scale", { gpa: 4, from_scale: "us4", to_scale: "australia-hd" });
+    const conversions = r.structured!.conversions as { scale: string; letter: string; points: number }[];
+    expect(conversions).toHaveLength(1);
+    expect(conversions[0].scale).toBe("australia-hd");
+    expect(conversions[0].letter).toBe("HD");
+    expect(conversions[0].points).toBe(7);
   });
 
   it("gives the score needed on the final", async () => {

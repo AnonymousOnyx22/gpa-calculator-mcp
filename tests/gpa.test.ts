@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
-import { bandForPercent, bandForLetter, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner, planCourseTargets } from "../src/grades.js";
+import { bandForPercent, bandForLetter, convertGpaScale, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner, planCourseTargets } from "../src/grades.js";
 
 let client: Client;
 beforeAll(async () => {
@@ -160,12 +160,23 @@ describe("grade math", () => {
   it("rejects upcoming courses with no credits", () => {
     expect(() => planCourseTargets([{ name: "Calculus", credits: 0 }], 3.5, "us4")).toThrow(/credits/);
   });
+  it("converts a GPA to the nearest band on another scale", () => {
+    expect(convertGpaScale(4, "us4", ["uk-classification"])[0].band.letter).toBe("1st");
+    expect(convertGpaScale(3.5, "us4", ["uk-classification"])[0].band.letter).toBe("2:1");
+    expect(convertGpaScale(3.3, "us4", ["australia-hd"])[0].band.letter).toBe("D");
+    expect(convertGpaScale(2, "us4", ["australia-hd"])[0].band.letter).toBe("P");
+    expect(convertGpaScale(3.3, "uk-classification", ["us4"])[0].band.letter).toBe("B+");
+    expect(convertGpaScale(7, "australia-hd", ["us4"])[0].band.letter).toBe("A");
+  });
+  it("rejects a GPA above the top of its scale", () => {
+    expect(() => convertGpaScale(5, "us4", ["uk-classification"])).toThrow(/between 0 and 4/);
+  });
 });
 
 describe("MCP tools", () => {
-  it("lists seven read only tools", async () => {
+  it("lists eight read only tools", async () => {
     const tools = (await client.listTools()).tools;
-    expect(tools.map((t) => t.name).sort()).toEqual(["calculate_gpa", "convert_grade", "list_scales", "needed_on_final", "plan_courses", "target_gpa_planner", "weighted_grade"]);
+    expect(tools.map((t) => t.name).sort()).toEqual(["calculate_gpa", "convert_gpa_scale", "convert_grade", "list_scales", "needed_on_final", "plan_courses", "target_gpa_planner", "weighted_grade"]);
     for (const t of tools) expect(t.annotations?.readOnlyHint).toBe(true);
   });
   it("names every parameter and gives an example prompt in each description", async () => {
@@ -341,6 +352,24 @@ describe("MCP tools", () => {
     const r = await call("convert_grade", { grade: 68, scale: "uk-classification" });
     expect(r.text).toContain("2:1");
     expect(r.text).toContain("3.3 grade points");
+  });
+  it("converts a GPA to the UK and Australian scales", async () => {
+    const r = await call("convert_gpa_scale", { gpa: 3.5, from_scale: "us4" });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("2:1");
+    expect(r.text).toContain("D");
+    expect(r.text).toContain("common comparison");
+  });
+  it("converts a GPA to one target scale", async () => {
+    const r = await call("convert_gpa_scale", { gpa: 4, from_scale: "us4", to_scale: "uk-classification" });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain("1st");
+    expect(r.text).not.toContain("australia-hd");
+  });
+  it("gives a clear error when a GPA is above its scale", async () => {
+    const r = await call("convert_gpa_scale", { gpa: 5, from_scale: "us4" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("between 0 and 4");
   });
   it("calculates a GPA on the Australian 7.0 scale", async () => {
     const r = await call("calculate_gpa", { courses: [{ name: "Networks", credits: 6, grade: "HD" }, { name: "Scripting", credits: 6, grade: 75 }], scale: "australia-hd" });

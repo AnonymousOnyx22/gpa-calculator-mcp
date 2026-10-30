@@ -1,23 +1,23 @@
 # gpa-calculator-mcp
 
-> GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted GPA, weighted grades, a target GPA, grades on the final and letter grade conversion. Works offline, no account. Free and open source, works with Claude, ChatGPT, Cursor, Copilot and others.
+> GPA calculator MCP server for AI apps. Calculate GPA, CGPA, SGPA, weighted GPA, weighted grades, a target GPA, grades on the final, letter grade conversion and converting a GPA between scales. Works offline, no account. Free and open source, works with Claude, ChatGPT, Cursor, Copilot and others.
 
 ## Setup
 - Run with npx -y gpa-calculator-mcp
 - Works offline, no account. No environment variables, no network calls and no data is stored.
-- All seven tools are read only. They only do arithmetic on the numbers you pass in.
+- All eight tools are read only. They only do arithmetic on the numbers you pass in.
 
 ## How it compares
 
 | Option | Needs login or school access | Runs offline | Focus | When to use |
 | --- | --- | --- | --- | --- |
-| GPA Calculator MCP (this server) | No | Yes | Just the numbers. GPA, CGPA, SGPA, weighted grades, targets and conversions. | You have numbers or want to plan and just need the calculation. |
+| GPA Calculator MCP (this server) | No | Yes | Just the numbers. GPA, CGPA, SGPA, weighted grades, targets, grade and scale conversions. | You have numbers or want to plan and just need the calculation. |
 | LMS MCP servers (like Brightspace, Canvas, Moodle, Google Classroom) | Often yes, connects to a school system | Usually no | Pulls grades, due dates and course data from a learning system. Some include a target grade calculator. | You want to pull data straight from your courses, not type numbers in. |
 
 For a student who just wants the number, a focused offline calculator avoids signing in, avoids connecting to a school server and keeps the task to arithmetic. If you already pull grades from an LMS, you can still pass those numbers to this calculator.
 
 ## Grade conversion tables
-The server has six grade scales that are built in. The scale parameter takes one of the six ids below, and any other value is rejected before the tool runs. Run list_scales to print the same tables.
+The server has six grade scales that are built in. The scale parameters take one of the six ids below, and any other value is rejected before the tool runs. Run list_scales to print the same tables.
 
 ### us4 (US 4.0 scale)
 - A: 93 to 100, 4.0 grade points
@@ -92,7 +92,7 @@ The weighted-5.0 table is a plain mapping rather than one school's official tabl
 
 ## Tools
 
-Every tool below has its parameters and one example call. An example call is JSON in the MCP tools/call shape: the tool name plus its arguments. All seven tools are read only.
+Every tool below has its parameters and one example call. An example call is JSON in the MCP tools/call shape: the tool name plus its arguments. All eight tools are read only.
 
 Every tool also has an output schema and returns the numbers as fields next to the text, so a client that reads JSON gets the numbers without taking them out of the sentence. The Structured output line under each tool names the fields.
 
@@ -130,6 +130,21 @@ Example prompt: "Convert 78 percent to a letter grade on the Ontario college sca
 Output: "78 is B+ on the Ontario college 4.0 scale (common version, check your school's table). That letter covers 75 to 79 percent and is worth 3.5 grade points."
 
 Structured output: scale, scale_name, letter, min_percent, max_percent and points.
+
+### convert_gpa_scale
+Convert a GPA on one grade scale to the nearest band on another, so a GPA from one country can be read as a UK class or an Australian grade. Inputs: gpa (the GPA to convert, 0 to 7 and at or below the top of from_scale), from_scale (the scale the GPA is on, default us4) and optional to_scale (the scale to convert to; leave it out to convert to both the uk-classification and australia-hd scales). The GPA is read as a share of the top grade point on its own scale, then the nearest band on the target scale is returned with its percentage range and grade points. This is a common comparison, not an official conversion, so check the target school's table. Example prompt: "I have a 3.5 GPA on the US 4.0 scale. What is that in the UK?"
+
+Parameters:
+- gpa (number, required): The GPA to convert, between 0 and 7. It must be at or below the top grade point of from_scale.
+- from_scale (string enum, optional, default "us4"): Grade scale id the GPA is on: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Defaults to "us4".
+- to_scale (string enum, optional): Grade scale id to convert to: "us4", "us4plus", "ontario-college", "uk-classification", "australia-hd" or "weighted-5.0". Leave it out to convert to both the uk-classification and australia-hd scales.
+
+Example call: `{"name":"convert_gpa_scale","arguments":{"gpa":3.5,"from_scale":"us4"}}`
+Example prompt: "I have a 3.5 GPA on the US 4.0 scale. What is that in the UK?"
+
+Output: one line for each target scale with the band, its percentage range and its grade points, then a note that this is a common comparison and not an official conversion. With no to_scale, the answer covers the uk-classification and australia-hd scales.
+
+Structured output: gpa, from_scale, from_scale_name, from_max_points and conversions. The conversions array holds one entry per target scale with scale, scale_name, letter, min_percent, max_percent and points.
 
 ### needed_on_final
 Calculate the score needed on a final exam or last assignment to reach a target course grade. Inputs: current_percent (the average on all the other work, 0 to 100), final_weight_percent (how much the final is worth, greater than 0 and at most 100) and a target. Give the target as target_percent (the course grade you want, 0 to 100), as target_letter (a letter like "B+" or a class like "2:1", whose cutoff comes from the scale table), or as both. The scale id sets the table the letter cutoff comes from. Says so when the target is already locked in or out of reach. Example prompt: "My grade is 85% and the final is worth 40% of the course. What do I need on the final to finish with a B+?"
@@ -233,6 +248,10 @@ It depends on your school and program. On the built in us4 scale, D covers 63 to
 Can I ask for a letter grade instead of a percentage?
 
 Yes. Pass target_letter to needed_on_final, for example target_letter "B+", and the tool looks the cutoff up in the scale table. Pass scale "uk-classification" for a UK class such as 2:1. You can pass target_percent as well, and the tool works to the higher of the two.
+
+How do I convert my GPA to a UK or Australian scale?
+
+Use convert_gpa_scale. Pass your GPA as gpa and the scale it is on as from_scale. Leave to_scale out and the tool gives the nearest band on both the uk-classification and australia-hd scales, or pass one of them to get only that one. It reads your GPA as a share of the top grade point on its own scale and picks the nearest band on the target scale. That is a comparison, not an official conversion, so check the target school's table.
 
 Do my course parts have to add up to 100?
 
