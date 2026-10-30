@@ -24,10 +24,10 @@ describe("npm pack smoke test for the bin", () => {
     try {
       npm(["pack", "--pack-destination", work]);
 
-      const tarball = join(work, tarballName);
       const extracted = join(work, "extracted");
       mkdirSync(extracted, { recursive: true });
-      execFileSync("tar", ["-xzf", tarball, "-C", extracted], { stdio: "pipe" });
+      // relative paths, because GNU tar reads a Windows path such as C:\... as a remote host
+      execFileSync("tar", ["-xzf", tarballName, "-C", "extracted"], { cwd: work, stdio: "pipe" });
 
       const packageDir = join(extracted, "package");
       const bin = join(packageDir, "build", "src", "index.js");
