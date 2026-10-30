@@ -193,6 +193,21 @@ The two UK and Australian scales turn a class or a letter into grade points so t
 Run `convert_gpa_scale` to read a GPA on one scale as the nearest band on another, so a US 4.0 GPA can be read as a UK class or an Australian grade. It reads the GPA as a share of the top grade point on its own scale and picks the nearest band on the target scale. That is a comparison, not an official conversion, so check the target school's table.
 
 
+## Import a transcript
+
+Pass `transcript_csv` to `calculate_gpa` with your whole transcript as a CSV string. A header row is optional, the columns can be in any order, and headers like `Course Title`, `Final Grade` and `Credit Hours` are read as the name, grade and credits columns. A plain no header CSV works too, with columns in the order name, credits, grade.
+
+Example:
+
+```text
+Course,Credits,Grade
+Calculus,4,A
+History,3,B+
+Chemistry,3,C
+```
+
+Rows with `P`, `NP` or `W` grades are left out of the GPA and named in the answer, except a `P` on the `australia-hd` scale, where `P` counts. If a header row has no credits or grade column, the tool says which column is missing. When `courses` is not given, `transcript_csv` is parsed and used as the course list.
+
 ## FAQ
 
 What is the difference between CGPA and SGPA?
