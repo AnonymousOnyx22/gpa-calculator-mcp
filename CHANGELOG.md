@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.9
 
 - calculate_gpa now gives a clearer error when transcript_csv has only P, NP or W rows. It names the rows and suggests passing courses with a letter or percentage grade, or a transcript_csv that includes graded rows.
 
