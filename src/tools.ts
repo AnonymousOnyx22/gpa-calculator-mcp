@@ -229,6 +229,7 @@ export const tools: ToolDef<Api>[] = [
     description:
       "Convert a letter or percentage into the matching letter, percentage range and grade points on a grade scale. " +
       "Inputs: grade (a letter like \"B+\" or a percentage like 87 or \"87%\") and a scale id. " +
+      "If the letter is not on the chosen scale, the error lists the valid letters for that scale. " +
       'Example prompt: "Convert 78 percent to a letter grade on the Ontario college scale."',
     inputSchema: {
       grade,

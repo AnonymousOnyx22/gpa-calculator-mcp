@@ -119,7 +119,7 @@ Output: one line per course ("Calculus: A, 4.0 points x 3 credits"), then "GPA f
 Structured output: scale, scale_name, courses, credits, term_gpa, gpa_credits, excluded_courses (the P, NP and W courses left out of the GPA, with name, credits and grade), dropped_courses (the courses left out by drop_lowest, with name, credits and the letter they counted as), weighted_gpa and weighted_credits when a credit multiplier other than 1 is passed, and cumulative_gpa and cumulative_credits when the earlier work is folded in. The courses array holds one entry per course with name, credits, letter, points and quality_points, plus credit_multiplier, weighted_credits and weighted_quality_points when the course has a multiplier other than 1.
 
 ### convert_grade
-Convert a letter or percentage into the matching letter, percentage range and grade points on a grade scale. Inputs: grade (a letter like "B+" or a percentage like 87 or "87%") and a scale id. Example prompt: "Convert 78 percent to a letter grade on the Ontario college scale."
+Convert a letter or percentage into the matching letter, percentage range and grade points on a grade scale. Inputs: grade (a letter like "B+" or a percentage like 87 or "87%") and a scale id. If the letter is not on the chosen scale, the error lists the valid letters for that scale. Example prompt: "Convert 78 percent to a letter grade on the Ontario college scale."
 
 Parameters:
 - grade (string or number, required): A letter like "B+" or a percentage like 87 or "87%".
