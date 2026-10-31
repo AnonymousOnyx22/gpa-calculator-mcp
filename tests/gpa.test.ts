@@ -528,5 +528,8 @@ describe("MCP tools", () => {
     });
     expect(r.isError).toBe(true);
     expect(r.text).toContain("This transcript has no graded courses");
+    expect(r.text).toContain("All 2 rows are P, NP or W");
+    expect(r.text).toContain("Writing (P), Art (W)");
+    expect(r.text).toContain("Pass courses with a letter or percentage grade");
   });
 });

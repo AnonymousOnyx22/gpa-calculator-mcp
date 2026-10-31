@@ -143,7 +143,11 @@ export const tools: ToolDef<Api>[] = [
         }));
       }
       if (notCounted.length > 0 && (!courses || courses.length === 0)) {
-        throw new Error("This transcript has no graded courses. P, NP and W grades are left out of the GPA, so pass a course with a letter or percentage grade.");
+        const found = notCounted.map((c) => `${c.name ?? "Course"} (${c.grade})`).join(", ");
+        throw new Error(
+          `This transcript has no graded courses. All ${notCounted.length} row${notCounted.length === 1 ? " is" : "s are"} P, NP or W, which are left out of the GPA: ${found}. ` +
+            "Pass courses with a letter or percentage grade, or use a transcript_csv that includes graded rows.",
+        );
       }
       if (!courses || courses.length === 0) {
         throw new Error("Pass courses or transcript_csv with at least one course.");

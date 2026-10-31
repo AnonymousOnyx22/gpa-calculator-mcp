@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- calculate_gpa now gives a clearer error when transcript_csv has only P, NP or W rows. It names the rows and suggests passing courses with a letter or percentage grade, or a transcript_csv that includes graded rows.
+
 ## 0.1.8
 
 - calculate_gpa takes an optional drop_lowest, the number of lowest graded courses to leave out of the GPA, for schools that drop the lowest course. The dropped courses come back in a new dropped_courses field and in a "Dropped as the lowest:" line. Without it nothing changes.
