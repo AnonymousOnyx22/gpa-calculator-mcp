@@ -97,6 +97,14 @@ describe("grade math", () => {
     expect(neededOnFinal(95, 20, 60).alreadyThere).toBe(true);
     expect(neededOnFinal(50, 10, 90).possible).toBe(false);
   });
+  it("names the field when needed_on_final gets a value out of range", () => {
+    expect(() => neededOnFinal(120, 40, 80)).toThrow(/current_percent is 120/);
+    expect(() => neededOnFinal(-5, 40, 80)).toThrow(/current_percent is -5/);
+    expect(() => neededOnFinal(74, 0, 80)).toThrow(/final_weight_percent is 0/);
+    expect(() => neededOnFinal(74, 150, 80)).toThrow(/final_weight_percent is 150/);
+    expect(() => neededOnFinal(74, 40, 101)).toThrow(/target is 101 percent/);
+    expect(() => neededOnFinal(NaN, 40, 80)).toThrow(/current_percent/);
+  });
   it("reads a letter target from the scale table", () => {
     expect(resolveTarget("us4", { letter: "B+" }).percent).toBe(87);
     expect(resolveTarget("us4", { letter: "b+" }).band?.letter).toBe("B+");

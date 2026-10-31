@@ -277,8 +277,15 @@ export function resolveTarget(scale: string, goal: TargetGoal): { percent: numbe
 }
 
 export function neededOnFinal(current: number, finalWeight: number, target: number) {
-  if (!(finalWeight > 0 && finalWeight <= 100)) throw new Error("The final's weight must be between 0 and 100 percent.");
-  if (current < 0 || current > 100 || target < 0 || target > 100) throw new Error("Grades must be percentages between 0 and 100.");
+  if (!(finalWeight > 0 && finalWeight <= 100)) {
+    throw new Error(`final_weight_percent is ${finalWeight}. The final's weight must be greater than 0 and at most 100 percent of the course.`);
+  }
+  if (!(current >= 0 && current <= 100)) {
+    throw new Error(`current_percent is ${current}. The grade on the work already done must be a percentage between 0 and 100.`);
+  }
+  if (!(target >= 0 && target <= 100)) {
+    throw new Error(`The target is ${target} percent. A target_percent, or the cutoff of a target_letter, must be between 0 and 100.`);
+  }
   const keep = 100 - finalWeight;
   // current is the grade on the work already done, which makes up the other (100 - weight) percent
   const needed = (target - (current * keep) / 100) / (finalWeight / 100);
