@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- calculate_gpa takes an optional replace_repeats. When true, a course listed more than once counts only its last attempt, for schools that replace an earlier grade when a course is retaken. The replaced attempts come back in a new replaced_courses field and in a "Replaced by a later attempt:" line. Without it nothing changes.
+
 ## 0.1.9
 
 - calculate_gpa now gives a clearer error when transcript_csv has only P, NP or W rows. It names the rows and suggests passing courses with a letter or percentage grade, or a transcript_csv that includes graded rows.

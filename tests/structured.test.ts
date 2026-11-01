@@ -320,3 +320,28 @@ describe("calculate_gpa drop_lowest", () => {
     expect(r.isError).toBe(true);
   });
 });
+
+describe("calculate_gpa replace_repeats", () => {
+  const courses = [
+    { name: "Calculus", credits: 3, grade: "D" },
+    { name: "History", credits: 3, grade: "B" },
+    { name: " calculus ", credits: 3, grade: "A" },
+  ];
+  it("counts only the last attempt of a repeated course", async () => {
+    const r = await call("calculate_gpa", { courses, replace_repeats: true });
+    expect(r.isError).toBe(false);
+    expect(r.structured!.term_gpa).toBe(3.5);
+    expect(r.structured!.replaced_courses).toEqual([{ name: "Calculus", credits: 3, grade: "D" }]);
+    expect(r.text).toContain("Replaced by a later attempt: Calculus (D, 3 credits)");
+    outputSchemaOf("calculate_gpa").parse(r.structured);
+  });
+  it("keeps every attempt by default", async () => {
+    const r = await call("calculate_gpa", { courses });
+    expect(r.structured!.courses).toHaveLength(3);
+    expect(r.structured!.replaced_courses).toEqual([]);
+  });
+  it("never matches courses without a name", async () => {
+    const r = await call("calculate_gpa", { courses: [{ credits: 3, grade: "A" }, { credits: 3, grade: "C" }], replace_repeats: true });
+    expect(r.structured!.courses).toHaveLength(2);
+  });
+});
