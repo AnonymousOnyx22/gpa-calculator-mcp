@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
-import { bandForPercent, bandForLetter, convertGpaScale, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner, planCourseTargets } from "../src/grades.js";
+import { bandFor, bandForPercent, bandForLetter, convertGpaScale, neededOnFinal, resolveTarget, weighted, gpa, resolvePrior, targetGpaPlanner, planCourseTargets } from "../src/grades.js";
 
 let client: Client;
 beforeAll(async () => {
@@ -25,6 +25,14 @@ describe("grade math", () => {
     expect(bandForPercent("ontario-college", 82).letter).toBe("A");
     expect(bandForPercent("ontario-college", 77).points).toBe(3.5);
     expect(bandForPercent("ontario-college", 49.9).letter).toBe("F");
+  });
+  it("keeps bandFor on the lower band at 89.5, 79.99 and 100", () => {
+    expect(bandFor("us4", 89.5).letter).toBe("B+");
+    expect(bandFor("us4", 79.99).letter).toBe("C+");
+    expect(bandFor("us4", 100).letter).toBe("A");
+    expect(bandFor("ontario-college", 89.5).letter).toBe("A");
+    expect(bandFor("ontario-college", 79.99).letter).toBe("B+");
+    expect(bandFor("ontario-college", 100).letter).toBe("A+");
   });
   it("maps percentages and classes on the UK classification scale", () => {
     expect(bandForPercent("uk-classification", 70).letter).toBe("1st");
