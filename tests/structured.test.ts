@@ -363,3 +363,42 @@ describe("calculate_gpa replace_repeats", () => {
     expect(r.structured!.courses).toHaveLength(2);
   });
 });
+
+describe("calculate_gpa replace_repeats with drop_lowest", () => {
+  it("replaces repeats first, so the replaced attempt is not the one dropped", async () => {
+    const courses = [
+      { name: "Calculus", credits: 3, grade: "D" },
+      { name: "History", credits: 3, grade: "B" },
+      { name: "Art", credits: 3, grade: "C" },
+      { name: "Calculus", credits: 3, grade: "A" },
+    ];
+    const r = await call("calculate_gpa", { courses, replace_repeats: true, drop_lowest: 1 });
+    expect(r.isError).toBe(false);
+    expect(r.structured!.replaced_courses).toEqual([{ name: "Calculus", credits: 3, grade: "D" }]);
+    expect(r.structured!.dropped_courses).toEqual([{ name: "Art", credits: 3, grade: "C" }]);
+    expect(r.structured!.term_gpa).toBe(3.5);
+    expect(r.text).toContain("Dropped as the lowest: Art (C, 3 credits).");
+    expect(r.text).toContain("Replaced by a later attempt: Calculus (D, 3 credits).");
+    outputSchemaOf("calculate_gpa").parse(r.structured);
+  });
+  it("numbers unnamed dropped courses by their place after repeats are removed", async () => {
+    const courses = [
+      { name: "Calculus", credits: 3, grade: "D" },
+      { credits: 3, grade: "C" },
+      { name: "History", credits: 3, grade: "B" },
+      { name: "Calculus", credits: 3, grade: "A" },
+    ];
+    const r = await call("calculate_gpa", { courses, replace_repeats: true, drop_lowest: 1 });
+    expect(r.isError).toBe(false);
+    expect(r.structured!.dropped_courses).toEqual([{ name: "Course 1", credits: 3, grade: "C" }]);
+    expect(r.structured!.term_gpa).toBe(3.5);
+  });
+  it("errors when repeats leave no more courses than drop_lowest", async () => {
+    const courses = [
+      { name: "Calculus", credits: 3, grade: "D" },
+      { name: "Calculus", credits: 3, grade: "A" },
+    ];
+    const r = await call("calculate_gpa", { courses, replace_repeats: true, drop_lowest: 1 });
+    expect(r.isError).toBe(true);
+  });
+});
