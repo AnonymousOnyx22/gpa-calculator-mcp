@@ -344,6 +344,11 @@ describe("MCP tools", () => {
     expect(r.text).toContain("you finish at 88%");
     expect(r.text).not.toContain("finish at 76%");
   });
+  it("uses real line breaks in the weighted_grade text", async () => {
+    const r = await call("weighted_grade", { parts: [{ name: "Quizzes", weight: 20, score: 85 }] });
+    expect(r.text).not.toContain("\\n");
+    expect(r.text).toContain("\n\n");
+  });
   it("gives a friendly error when the weights add up to more than 100", async () => {
     const r = await call("weighted_grade", { parts: [{ name: "Quizzes", weight: 60, score: 85 }, { name: "Exam", weight: 60 }] });
     expect(r.isError).toBe(true);

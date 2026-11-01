@@ -485,7 +485,7 @@ export const tools: ToolDef<Api>[] = [
          now = `Grade so far: ${r.currentGrade}% on the ${r.doneWeight}% of the course that is marked.`;
          if (r.doneWeight < 100) now += ` That banks ${r.earnedPoints} of the 100 points the course is worth.`;
        }
-       const text = `${bullets(lines)}\\n\\n${now}\\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.${targetText}`;
+       const text = `${bullets(lines)}\n\n${now}\nIf you score 0 on everything left you finish at ${r.worstFinish}%. If you score 100 on everything left you finish at ${r.bestFinish}%. ${r.remainingWeight}% of the course is still to come.${targetText}`;
        return {
          text,
          structured: {
