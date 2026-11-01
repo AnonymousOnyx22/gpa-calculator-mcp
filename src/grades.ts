@@ -276,7 +276,9 @@ export function resolveTarget(scale: string, goal: TargetGoal): { percent: numbe
   throw new Error("Pass a target_percent, a target_letter, or both.");
 }
 
-export function neededOnFinal(current: number, finalWeight: number, target: number) {
+export type FinalNeed = { needed: number; possible: boolean; alreadyThere: boolean };
+
+export function neededOnFinal(current: number, finalWeight: number, target: number): FinalNeed {
   if (!(finalWeight > 0 && finalWeight <= 100)) {
     throw new Error(`final_weight_percent is ${finalWeight}. The final's weight must be greater than 0 and at most 100 percent of the course.`);
   }
@@ -290,6 +292,26 @@ export function neededOnFinal(current: number, finalWeight: number, target: numb
   // current is the grade on the work already done, which makes up the other (100 - weight) percent
   const needed = (target - (current * keep) / 100) / (finalWeight / 100);
   return { needed: round(needed), possible: needed <= 100, alreadyThere: needed <= 0 };
+}
+
+export interface FinalScenario extends FinalNeed {
+  letter: string;
+  targetPercent: number;
+}
+
+/**
+ * The score needed on the final for each of the letters A, B and C on a scale. A letter the
+ * scale does not have (the UK scale has no B, for example) is left out of the result.
+ */
+export function finalScenarios(scale: string, current: number, finalWeight: number): FinalScenario[] {
+  const id = assertScale(scale);
+  const out: FinalScenario[] = [];
+  for (const letter of ["A", "B", "C"]) {
+    const band = SCALES[id].bands.find((b) => b.letter === letter);
+    if (!band) continue;
+    out.push({ letter, targetPercent: band.min, ...neededOnFinal(current, finalWeight, band.min) });
+  }
+  return out;
 }
 
 export interface Part {
