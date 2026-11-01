@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ToolDef, bullets } from "./core/tools.js";
-import { SCALES, bandFor, convertGpaScale, gpa, hasGradePoints, maxPoints, neededOnFinal, neededOnRemaining, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, type TranscriptCsvRow, isScaleId, assertScale } from "./grades.js";
+import { SCALES, bandFor, convertGpaScale, finalScenarios, gpa, hasGradePoints, maxPoints, neededOnFinal, neededOnRemaining, parseTranscriptCsv, planCourseTargets, resolvePrior, resolveTarget, targetGpaPlanner, weighted, type ScaleId, type TranscriptCsvRow, isScaleId, assertScale } from "./grades.js";
 
 type Api = null;
 
@@ -390,6 +390,18 @@ export const tools: ToolDef<Api>[] = [
       needed_percent: z.number().describe("The score needed on the final. It is below 0 when the target is already reached, and above 100 when the target is out of reach."),
       possible: z.boolean().describe("True when the target can be reached with this weighting."),
       already_there: z.boolean().describe("True when the target is already reached, so a 0 on the final keeps it."),
+      final_grade_scenarios: z
+        .array(
+          z.object({
+            letter: z.string().describe("The letter of the scenario: A, B or C."),
+            target_percent: z.number().describe("The lowest percentage the letter covers on the scale."),
+            needed_percent: z.number().describe("The score needed on the final to reach that letter."),
+            possible: z.boolean().describe("True when the letter can be reached with this weighting."),
+            already_there: z.boolean().describe("True when the letter is already reached, so a 0 on the final keeps it."),
+          }),
+        )
+        .optional()
+        .describe("The score needed on the final for each of the letters A, B and C side by side. A letter the scale does not have is left out, and the field is left out when the scale has none of them."),
     },
     run: async (a) => {
       const scaleId = assertScale(a.scale);
@@ -410,6 +422,16 @@ export const tools: ToolDef<Api>[] = [
       if (band) {
         structured.target_letter = band.letter;
         structured.letter_min_percent = band.min;
+      }
+      const scenarios = finalScenarios(scaleId, a.current_percent, a.final_weight_percent);
+      if (scenarios.length > 0) {
+        structured.final_grade_scenarios = scenarios.map((x) => ({
+          letter: x.letter,
+          target_percent: x.targetPercent,
+          needed_percent: x.needed,
+          possible: x.possible,
+          already_there: x.alreadyThere,
+        }));
       }
       let text: string;
       if (!band) {

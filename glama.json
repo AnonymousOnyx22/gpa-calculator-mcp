@@ -266,7 +266,7 @@
         }
       },
       "output": "\"You need 90% on the final (worth 40%) to finish with the grade B+, which starts at 87% on the US 4.0 scale. You have 85% on the rest of the course.\" Give target_percent 80 instead of a letter and the tool says you need 72.5% on the final to finish with 80%.",
-      "structured_output": "scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given."
+      "structured_output": "scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given. It also returns final_grade_scenarios, with the letter, target_percent, needed_percent, possible and already_there for each of A, B and C that the scale has."
     },
     {
       "name": "weighted_grade",

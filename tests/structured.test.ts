@@ -190,6 +190,18 @@ describe("the tools return structured content", () => {
     expect(r.structured!.already_there).toBe(false);
   });
 
+  it("lists the A, B and C scenarios for the final", async () => {
+    const r = await call("needed_on_final", { current_percent: 80, final_weight_percent: 40, target_letter: "B+", scale: "us4" });
+    const s = r.structured!.final_grade_scenarios as { letter: string; target_percent: number; needed_percent: number }[];
+    expect(s.map((x) => x.letter)).toEqual(["A", "B", "C"]);
+    expect(s[1].needed_percent).toBeGreaterThan(s[2].needed_percent);
+  });
+
+  it("leaves out the scenarios when the scale has no A, B or C", async () => {
+    const r = await call("needed_on_final", { current_percent: 60, final_weight_percent: 50, target_letter: "2:1", scale: "uk-classification" });
+    expect(r.structured!.final_grade_scenarios).toBeUndefined();
+  });
+
   it("says in the fields that a target is out of reach", async () => {
     const r = await call("needed_on_final", { current_percent: 50, final_weight_percent: 10, target_percent: 90 });
     expect(r.structured!.needed_percent).toBeGreaterThan(100);

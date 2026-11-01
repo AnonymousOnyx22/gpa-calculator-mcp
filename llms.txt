@@ -166,7 +166,7 @@ Example prompt: "My grade is 85% and the final is worth 40% of the course. What 
 
 Output: "You need 90% on the final (worth 40%) to finish with the grade B+, which starts at 87% on the US 4.0 scale. You have 85% on the rest of the course." Give target_percent 80 instead of a letter and the tool says you need 72.5% on the final to finish with 80%.
 
-Structured output: scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given.
+Structured output: scale, scale_name, current_percent, final_weight_percent, target_percent, needed_percent, possible and already_there, plus target_letter and letter_min_percent when a letter target was given. It also returns final_grade_scenarios, with the letter, target_percent, needed_percent, possible and already_there for each of A, B and C that the scale has.
 
 ### weighted_grade
 Combine weighted course parts into the grade so far, plus the worst and best possible finish. Inputs: parts (each with a name, a weight that is a percentage of the whole course greater than 0, and an optional score between 0 and 100; leave the score out for parts that are not marked yet). Optional target_percent sets a course grade to work out the average needed on the unmarked parts. A weight is a percentage of the whole course, so the parts are never rescaled. Parts that add up to less than 100 leave the rest of the course still to come, and weights that add up to more than 100 are an error. Example prompt: "My course is 20% quizzes, 30% labs, 50% exam. I have 85 on quizzes and 70 on labs. What's my grade so far and what's the best I can finish with?"

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- needed_on_final returns a new final_grade_scenarios field with the score needed on the final for each of A, B and C on the chosen scale, side by side. A letter the scale does not have, such as B on the uk-classification scale, is left out. The text answer and the existing fields are unchanged.
 - weighted_grade no longer shows a literal backslash n in its text answer. The line breaks now render as real line breaks. The numbers and fields are unchanged.
 - calculate_gpa takes an optional replace_repeats. When true, a course listed more than once counts only its last attempt, for schools that replace an earlier grade when a course is retaken. The replaced attempts come back in a new replaced_courses field and in a "Replaced by a later attempt:" line. Without it nothing changes.
 
