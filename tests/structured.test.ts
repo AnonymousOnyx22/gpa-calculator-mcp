@@ -230,6 +230,12 @@ describe("the tools return structured content", () => {
     ]);
   });
 
+  it("breaks the text into real lines, not a literal backslash n", async () => {
+    const r = await call("weighted_grade", { parts: [{ name: "Quizzes", weight: 20, score: 85 }, { name: "Labs", weight: 30, score: 70 }] });
+    expect(r.text).not.toContain("\\n");
+    expect(r.text.split("\n").length).toBeGreaterThan(1);
+  });
+
   it("leaves the grade so far empty when nothing is marked", async () => {
     const r = await call("weighted_grade", { parts: [{ name: "Exam", weight: 100 }] });
     expect(r.structured!.current_grade).toBeNull();
